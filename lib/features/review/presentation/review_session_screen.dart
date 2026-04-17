@@ -16,31 +16,38 @@ class ReviewSessionScreen extends ConsumerStatefulWidget {
 }
 
 class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
-  int _bundleSeed = 0;
   final Set<String> _doneCommands = <String>{};
   bool _objectiveDone = false;
   final Set<String> _doneQuiz = <String>{};
 
   @override
   Widget build(BuildContext context) {
-    final commands = ref.watch(allCommandsProvider);
-    final objectives = ref.watch(businessObjectivesProvider);
-    final quiz = ref.watch(quizQuestionsProvider(null));
+    final bundle = ref.watch(adaptiveReviewBundleProvider);
+    final quizInsights = ref.watch(quizInsightsProvider);
+    final selectedShell = ref.watch(reviewShellFilterProvider);
+    final selectedDifficulty = ref.watch(reviewDifficultyFilterProvider);
+    final focusWeak = ref.watch(reviewFocusWeakProvider);
 
-    final commandSlice = _slice(commands, 3, _bundleSeed);
-    final objective = objectives.isEmpty
-        ? null
-        : objectives[_bundleSeed % objectives.length];
-    final quizSlice = _slice(quiz, 5, _bundleSeed + 2);
+    final commands = bundle.commands;
+    final objective = bundle.objective;
+    final quizSlice = bundle.quizQuestions;
 
+    final commandDone = _doneCommands
+        .where((id) => commands.any((cmd) => cmd.id == id))
+        .length;
+    final quizDone = _doneQuiz
+        .where((id) => quizSlice.any((q) => q.id == id))
+        .length;
+
+    final total =
+        commands.length + (objective == null ? 0 : 1) + quizSlice.length;
     final completedCount =
-        _doneCommands.length + (_objectiveDone ? 1 : 0) + _doneQuiz.length;
-    const total = 9;
-    final ratio = completedCount / total;
+        commandDone + (objective != null && _objectiveDone ? 1 : 0) + quizDone;
+    final ratio = total == 0 ? 0.0 : completedCount / total;
 
     return Scaffold(
       drawer: const AppDrawer(),
-      appBar: AppBar(title: const Text('Révision 10 min')),
+      appBar: AppBar(title: const Text('Révision adaptative 10 min')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -51,12 +58,12 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Session auto',
+                    'Session auto-personnalisée',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    '3 commandes + 1 objectif + 5 questions. Avance étape par étape.',
+                    'La sélection se base sur tes erreurs quiz + commandes moins consultées.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -67,17 +74,73 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  FilledButton.tonalIcon(
-                    onPressed: () {
-                      setState(() {
-                        _bundleSeed += 1;
-                        _doneCommands.clear();
-                        _objectiveDone = false;
-                        _doneQuiz.clear();
-                      });
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Tous shells'),
+                        selected: selectedShell == null,
+                        onSelected: (_) {
+                          ref.read(reviewShellFilterProvider.notifier).state =
+                              null;
+                          _resetSession();
+                        },
+                      ),
+                      ...ShellType.values.map(
+                        (shell) => ChoiceChip(
+                          label: Text(shell.label),
+                          selected: selectedShell == shell,
+                          onSelected: (_) {
+                            ref.read(reviewShellFilterProvider.notifier).state =
+                                shell;
+                            _resetSession();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Tous niveaux'),
+                        selected: selectedDifficulty == null,
+                        onSelected: (_) {
+                          ref
+                                  .read(reviewDifficultyFilterProvider.notifier)
+                                  .state =
+                              null;
+                          _resetSession();
+                        },
+                      ),
+                      ...DifficultyLevel.values.map(
+                        (level) => ChoiceChip(
+                          label: Text(level.label),
+                          selected: selectedDifficulty == level,
+                          onSelected: (_) {
+                            ref
+                                    .read(
+                                      reviewDifficultyFilterProvider.notifier,
+                                    )
+                                    .state =
+                                level;
+                            _resetSession();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  FilterChip(
+                    label: const Text('Prioriser mes points faibles'),
+                    selected: focusWeak,
+                    onSelected: (value) {
+                      ref.read(reviewFocusWeakProvider.notifier).state = value;
+                      _resetSession();
                     },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Nouvelle session'),
                   ),
                 ],
               ),
@@ -91,30 +154,18 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '3 commandes à revoir',
+                    'Indicateurs adaptatifs',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  ...commandSlice.map(
-                    (cmd) => CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _doneCommands.contains(cmd.id),
-                      title: Text(cmd.name),
-                      subtitle: Text(cmd.shortDescription),
-                      secondary: IconButton(
-                        icon: const Icon(Icons.open_in_new),
-                        onPressed: () => context.push('/command/${cmd.id}'),
-                      ),
-                      onChanged: (_) {
-                        setState(() {
-                          if (_doneCommands.contains(cmd.id)) {
-                            _doneCommands.remove(cmd.id);
-                          } else {
-                            _doneCommands.add(cmd.id);
-                          }
-                        });
-                      },
-                    ),
+                  Text(
+                    'Réponses quiz: ${quizInsights.totalAnswers} • Précision: ${(quizInsights.accuracyRate * 100).toStringAsFixed(0)}%',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Erreurs cumulées: ${quizInsights.totalWrongAnswers}',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
@@ -128,13 +179,58 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Objectif du jour',
+                    '3 commandes recommandées',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (commands.isEmpty)
+                    Text(
+                      'Aucune commande ne correspond à ce filtre.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    )
+                  else
+                    ...commands.map(
+                      (cmd) => CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: _doneCommands.contains(cmd.id),
+                        title: Text(cmd.name),
+                        subtitle: Text(
+                          '${cmd.shortDescription}\n${bundle.reasonsByCommandId[cmd.id] ?? 'Révision ciblée'}',
+                        ),
+                        secondary: IconButton(
+                          icon: const Icon(Icons.open_in_new),
+                          onPressed: () => context.push('/command/${cmd.id}'),
+                        ),
+                        onChanged: (_) {
+                          setState(() {
+                            if (_doneCommands.contains(cmd.id)) {
+                              _doneCommands.remove(cmd.id);
+                            } else {
+                              _doneCommands.add(cmd.id);
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Objectif recommandé',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   if (objective == null)
                     Text(
-                      'Aucun objectif disponible.',
+                      'Aucun objectif disponible pour ce contexte.',
                       style: Theme.of(context).textTheme.bodyMedium,
                     )
                   else ...[
@@ -179,30 +275,45 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Quiz 5 questions',
+                    'Quiz ciblé (5 questions)',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  ...quizSlice.map(
-                    (q) => CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _doneQuiz.contains(q.id),
-                      title: Text(q.question),
-                      subtitle: Text('Niveau: ${q.difficulty.label}'),
-                      onChanged: (v) {
-                        setState(() {
-                          if (v == true) {
-                            _doneQuiz.add(q.id);
-                          } else {
-                            _doneQuiz.remove(q.id);
-                          }
-                        });
-                      },
+                  if (quizSlice.isEmpty)
+                    Text(
+                      'Aucune question disponible pour ce contexte.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    )
+                  else
+                    ...quizSlice.map(
+                      (q) => CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: _doneQuiz.contains(q.id),
+                        title: Text(q.question),
+                        subtitle: Text(
+                          'Niveau: ${q.difficulty.label} • erreurs passées: ${bundle.quizMistakesById[q.id] ?? 0}',
+                        ),
+                        onChanged: (v) {
+                          setState(() {
+                            if (v == true) {
+                              _doneQuiz.add(q.id);
+                            } else {
+                              _doneQuiz.remove(q.id);
+                            }
+                          });
+                        },
+                      ),
                     ),
-                  ),
                   const SizedBox(height: AppSpacing.sm),
                   FilledButton(
-                    onPressed: () => context.push('/quiz'),
+                    onPressed: () {
+                      final shell = selectedShell?.name;
+                      if (shell == null) {
+                        context.push('/quiz');
+                      } else {
+                        context.push('/quiz?shell=$shell');
+                      }
+                    },
                     child: const Text('Lancer quiz complet'),
                   ),
                 ],
@@ -214,13 +325,11 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
     );
   }
 
-  List<T> _slice<T>(List<T> data, int count, int seed) {
-    if (data.isEmpty) return const [];
-    final start = seed % data.length;
-    final out = <T>[];
-    for (var i = 0; i < count; i++) {
-      out.add(data[(start + i) % data.length]);
-    }
-    return out;
+  void _resetSession() {
+    setState(() {
+      _doneCommands.clear();
+      _objectiveDone = false;
+      _doneQuiz.clear();
+    });
   }
 }

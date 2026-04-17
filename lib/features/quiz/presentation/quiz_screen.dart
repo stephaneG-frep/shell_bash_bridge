@@ -17,6 +17,7 @@ class QuizScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(quizSessionProvider(shellType));
     final notifier = ref.read(quizSessionProvider(shellType).notifier);
+    final commandPool = ref.watch(allCommandsProvider);
 
     if (state.questions.isEmpty) {
       return const Scaffold(
@@ -89,7 +90,20 @@ class QuizScreen extends ConsumerWidget {
                     ? notifier.nextQuestion
                     : (state.selectedIndex == null
                           ? null
-                          : notifier.submitAnswer),
+                          : () async {
+                              final question = state.currentQuestion;
+                              final isCorrect =
+                                  state.selectedIndex ==
+                                  question.correctAnswerIndex;
+                              await ref
+                                  .read(quizInsightsProvider.notifier)
+                                  .recordAnswer(
+                                    question: question,
+                                    isCorrect: isCorrect,
+                                    commandPool: commandPool,
+                                  );
+                              notifier.submitAnswer();
+                            }),
                 child: Text(state.submitted ? 'Question suivante' : 'Valider'),
               ),
             ),

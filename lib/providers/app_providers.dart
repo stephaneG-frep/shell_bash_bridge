@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_strings.dart';
+import '../core/utils/command_risk.dart';
 import '../core/utils/enums.dart';
 import '../features/categories/domain/command_category.dart';
 import '../features/answers/data/mock_answers.dart';
@@ -212,6 +213,113 @@ final offlineAdvisorResponseProvider = Provider<OfflineAdvisorResponse?>((ref) {
     summary: answer.shortAnswer,
     steps: mergedSteps.take(6).toList(),
     commandIds: mergedCommands.take(6).toList(),
+  );
+});
+
+class GuidedAnswerResponse {
+  const GuidedAnswerResponse({
+    required this.confidence,
+    required this.confidenceLabel,
+    required this.riskLevel,
+    required this.riskLabel,
+    required this.riskMessage,
+    required this.checklist,
+    required this.alternatives,
+    required this.keyCommandIds,
+  });
+
+  final double confidence;
+  final String confidenceLabel;
+  final CommandRiskLevel riskLevel;
+  final String riskLabel;
+  final String riskMessage;
+  final List<String> checklist;
+  final List<AnswerEntry> alternatives;
+  final List<String> keyCommandIds;
+}
+
+final guidedAnswerResponseProvider = Provider<GuidedAnswerResponse?>((ref) {
+  final top = ref.watch(topAnswerProvider);
+  final filtered = ref.watch(filteredAnswersProvider);
+  final query = ref.watch(answerQueryProvider).trim().toLowerCase();
+  final selectedShell = ref.watch(selectedAnswerShellProvider);
+  final selectedDifficulty = ref.watch(selectedAnswerDifficultyProvider);
+  final commands = ref.watch(allCommandsProvider);
+  final commandById = <String, CommandItem>{for (final c in commands) c.id: c};
+
+  if (top == null) {
+    return null;
+  }
+
+  final risks = top.relatedCommandIds
+      .map((id) => commandById[id])
+      .whereType<CommandItem>()
+      .map((cmd) => assessCommandRisk(name: cmd.name, syntax: cmd.syntax))
+      .toList();
+
+  CommandRisk worstRisk = const CommandRisk(
+    level: CommandRiskLevel.low,
+    label: 'Risque faible',
+    message: 'Commande généralement sûre pour la pratique.',
+  );
+  for (final risk in risks) {
+    if (risk.level.index > worstRisk.level.index) {
+      worstRisk = risk;
+    }
+  }
+
+  final tokens = query
+      .split(RegExp(r'\s+'))
+      .where((token) => token.trim().isNotEmpty)
+      .toList();
+  var confidence = 0.45;
+  var tokenMatches = 0;
+  for (final token in tokens) {
+    final inQuestion = top.question.toLowerCase().contains(token);
+    final inTags = top.tags.any((tag) => tag.toLowerCase().contains(token));
+    final inSteps = top.steps.any((step) => step.toLowerCase().contains(token));
+    if (inQuestion || inTags || inSteps) {
+      tokenMatches += 1;
+    }
+  }
+
+  confidence += (tokenMatches.clamp(0, 3)) * 0.12;
+  if (selectedShell == null ||
+      top.shellType == null ||
+      top.shellType == selectedShell) {
+    confidence += 0.08;
+  }
+  if (selectedDifficulty == null ||
+      top.targetDifficulty == null ||
+      top.targetDifficulty == selectedDifficulty) {
+    confidence += 0.08;
+  }
+  confidence = confidence.clamp(0.35, 0.95);
+
+  final confidenceLabel = switch (confidence) {
+    >= 0.8 => 'Confiance élevée',
+    >= 0.6 => 'Confiance moyenne',
+    _ => 'Confiance faible',
+  };
+
+  final checklist = <String>[
+    'Valide le shell actif avant exécution (${selectedShell?.label ?? 'auto-détection'}).',
+    if (worstRisk.level != CommandRiskLevel.low)
+      'Teste la commande sur un cas non critique avant usage réel.',
+    if (worstRisk.level == CommandRiskLevel.high)
+      'Prépare une sauvegarde ou un rollback avant action.',
+    'Relis la syntaxe exacte et adapte le chemin à ton contexte.',
+  ];
+
+  return GuidedAnswerResponse(
+    confidence: confidence,
+    confidenceLabel: confidenceLabel,
+    riskLevel: worstRisk.level,
+    riskLabel: worstRisk.label,
+    riskMessage: worstRisk.message,
+    checklist: checklist,
+    alternatives: filtered.skip(1).take(2).toList(),
+    keyCommandIds: top.relatedCommandIds.take(4).toList(),
   );
 });
 
@@ -546,6 +654,149 @@ final tipOfDayProvider = Provider<String>((ref) {
   final tips = AppStrings.dailyTips;
   final dayIndex = DateTime.now().difference(DateTime(2026, 1, 1)).inDays;
   return tips[dayIndex % tips.length];
+});
+
+final reviewShellFilterProvider = StateProvider<ShellType?>((ref) => null);
+final reviewDifficultyFilterProvider = StateProvider<DifficultyLevel?>(
+  (ref) => null,
+);
+final reviewFocusWeakProvider = StateProvider<bool>((ref) => true);
+
+class AdaptiveReviewBundle {
+  const AdaptiveReviewBundle({
+    required this.commands,
+    required this.reasonsByCommandId,
+    required this.quizQuestions,
+    required this.quizMistakesById,
+    required this.objective,
+  });
+
+  final List<CommandItem> commands;
+  final Map<String, String> reasonsByCommandId;
+  final List<QuizQuestion> quizQuestions;
+  final Map<String, int> quizMistakesById;
+  final BusinessObjective? objective;
+}
+
+final adaptiveReviewBundleProvider = Provider<AdaptiveReviewBundle>((ref) {
+  final shell = ref.watch(reviewShellFilterProvider);
+  final difficulty = ref.watch(reviewDifficultyFilterProvider);
+  final focusWeak = ref.watch(reviewFocusWeakProvider);
+  final allCommands = ref.watch(allCommandsProvider);
+  final progress = ref.watch(userProgressProvider);
+  final quizInsights = ref.watch(quizInsightsProvider);
+  final quizPool = ref.watch(quizQuestionsProvider(shell));
+
+  bool commandMatches(CommandItem cmd) {
+    if (shell != null && cmd.shellType != shell) {
+      return false;
+    }
+    if (difficulty != null && cmd.difficulty != difficulty) {
+      return false;
+    }
+    return true;
+  }
+
+  final filteredCommands = allCommands.where(commandMatches).toList();
+  final reasons = <String, String>{};
+  final selected = <CommandItem>[];
+
+  final weakCommandEntries = quizInsights.wrongCommandCount.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+
+  void addByIdIfPossible(String commandId, String reason) {
+    if (selected.length >= 3) {
+      return;
+    }
+    final existing = selected.any((item) => item.id == commandId);
+    if (existing) {
+      return;
+    }
+    CommandItem? cmd;
+    for (final item in filteredCommands) {
+      if (item.id == commandId) {
+        cmd = item;
+        break;
+      }
+    }
+    if (cmd == null) {
+      return;
+    }
+    selected.add(cmd);
+    reasons[cmd.id] = reason;
+  }
+
+  if (focusWeak) {
+    for (final entry in weakCommandEntries) {
+      addByIdIfPossible(
+        entry.key,
+        'Point faible détecté (${entry.value} erreur(s) quiz)',
+      );
+    }
+  }
+
+  for (final cmd in filteredCommands) {
+    if (selected.length >= 3) {
+      break;
+    }
+    if (!progress.viewedCommandIds.contains(cmd.id)) {
+      addByIdIfPossible(cmd.id, 'Commande encore peu consultée');
+    }
+  }
+
+  for (final cmd in filteredCommands) {
+    if (selected.length >= 3) {
+      break;
+    }
+    if (cmd.difficulty == DifficultyLevel.beginner) {
+      addByIdIfPossible(cmd.id, 'Renforcement des fondamentaux');
+    }
+  }
+
+  for (final cmd in filteredCommands) {
+    if (selected.length >= 3) {
+      break;
+    }
+    addByIdIfPossible(cmd.id, 'Révision complémentaire');
+  }
+
+  final quizMistakesById = <String, int>{...quizInsights.wrongQuestionCount};
+  final prioritizedQuiz =
+      quizPool
+          .where((q) => difficulty == null || q.difficulty == difficulty)
+          .toList()
+        ..sort((a, b) {
+          final wa = quizMistakesById[a.id] ?? 0;
+          final wb = quizMistakesById[b.id] ?? 0;
+          if (wa != wb) {
+            return wb.compareTo(wa);
+          }
+          return a.id.compareTo(b.id);
+        });
+  final quizSlice = prioritizedQuiz.take(5).toList();
+
+  final matchingObjectives = mockBusinessObjectives.where((item) {
+    if (shell != null && item.shellType != null && item.shellType != shell) {
+      return false;
+    }
+    if (difficulty != null &&
+        item.targetDifficulty != null &&
+        item.targetDifficulty != difficulty) {
+      return false;
+    }
+    return true;
+  }).toList();
+  final objective = matchingObjectives.isEmpty
+      ? null
+      : matchingObjectives.first;
+
+  return AdaptiveReviewBundle(
+    commands: selected,
+    reasonsByCommandId: reasons,
+    quizQuestions: quizSlice,
+    quizMistakesById: quizMistakesById,
+    objective: objective,
+  );
 });
 
 final learningPathsProvider = Provider<List<LearningPath>>((ref) {
@@ -997,6 +1248,165 @@ class AppBackupService {
 final appBackupServiceProvider = Provider<AppBackupService>((ref) {
   return AppBackupService(ref);
 });
+
+class QuizInsightsState {
+  const QuizInsightsState({
+    this.wrongQuestionCount = const {},
+    this.wrongCommandCount = const {},
+    this.totalWrongAnswers = 0,
+    this.totalCorrectAnswers = 0,
+  });
+
+  final Map<String, int> wrongQuestionCount;
+  final Map<String, int> wrongCommandCount;
+  final int totalWrongAnswers;
+  final int totalCorrectAnswers;
+
+  int get totalAnswers => totalWrongAnswers + totalCorrectAnswers;
+
+  double get accuracyRate =>
+      totalAnswers == 0 ? 0 : totalCorrectAnswers / totalAnswers;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'wrongQuestionCount': wrongQuestionCount,
+      'wrongCommandCount': wrongCommandCount,
+      'totalWrongAnswers': totalWrongAnswers,
+      'totalCorrectAnswers': totalCorrectAnswers,
+    };
+  }
+
+  factory QuizInsightsState.fromMap(Map<String, dynamic> map) {
+    return QuizInsightsState(
+      wrongQuestionCount: Map<String, int>.from(
+        map['wrongQuestionCount'] as Map? ?? const {},
+      ),
+      wrongCommandCount: Map<String, int>.from(
+        map['wrongCommandCount'] as Map? ?? const {},
+      ),
+      totalWrongAnswers: map['totalWrongAnswers'] is int
+          ? map['totalWrongAnswers'] as int
+          : 0,
+      totalCorrectAnswers: map['totalCorrectAnswers'] is int
+          ? map['totalCorrectAnswers'] as int
+          : 0,
+    );
+  }
+
+  QuizInsightsState copyWith({
+    Map<String, int>? wrongQuestionCount,
+    Map<String, int>? wrongCommandCount,
+    int? totalWrongAnswers,
+    int? totalCorrectAnswers,
+  }) {
+    return QuizInsightsState(
+      wrongQuestionCount: wrongQuestionCount ?? this.wrongQuestionCount,
+      wrongCommandCount: wrongCommandCount ?? this.wrongCommandCount,
+      totalWrongAnswers: totalWrongAnswers ?? this.totalWrongAnswers,
+      totalCorrectAnswers: totalCorrectAnswers ?? this.totalCorrectAnswers,
+    );
+  }
+}
+
+class QuizInsightsNotifier extends StateNotifier<QuizInsightsState> {
+  QuizInsightsNotifier() : super(const QuizInsightsState()) {
+    _load();
+  }
+
+  static const _storageKey = 'quiz_insights_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_storageKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    state = QuizInsightsState.fromMap(
+      Map<String, dynamic>.from(jsonDecode(raw) as Map),
+    );
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_storageKey, jsonEncode(state.toMap()));
+  }
+
+  Future<void> recordAnswer({
+    required QuizQuestion question,
+    required bool isCorrect,
+    required List<CommandItem> commandPool,
+  }) async {
+    if (isCorrect) {
+      state = state.copyWith(
+        totalCorrectAnswers: state.totalCorrectAnswers + 1,
+      );
+      await _save();
+      return;
+    }
+
+    final wrongQuestions = <String, int>{...state.wrongQuestionCount};
+    wrongQuestions[question.id] = (wrongQuestions[question.id] ?? 0) + 1;
+
+    final wrongCommands = <String, int>{...state.wrongCommandCount};
+    final related = _inferRelatedCommandIds(question, commandPool);
+    for (final commandId in related) {
+      wrongCommands[commandId] = (wrongCommands[commandId] ?? 0) + 1;
+    }
+
+    state = state.copyWith(
+      wrongQuestionCount: wrongQuestions,
+      wrongCommandCount: wrongCommands,
+      totalWrongAnswers: state.totalWrongAnswers + 1,
+    );
+    await _save();
+  }
+
+  Future<void> reset() async {
+    state = const QuizInsightsState();
+    await _save();
+  }
+
+  List<String> _inferRelatedCommandIds(
+    QuizQuestion question,
+    List<CommandItem> commandPool,
+  ) {
+    final text = [
+      question.question,
+      question.explanation,
+      ...question.options,
+    ].join(' ').toLowerCase();
+
+    final matches = <String>[];
+    for (final command in commandPool) {
+      final commandName = command.name.toLowerCase();
+      final pattern = RegExp('\\b${RegExp.escape(commandName)}\\b');
+      if (pattern.hasMatch(text)) {
+        matches.add(command.id);
+      }
+    }
+
+    if (matches.isNotEmpty) {
+      return matches.take(3).toList();
+    }
+
+    return commandPool
+        .where((cmd) {
+          if (question.shellType != null &&
+              cmd.shellType != question.shellType) {
+            return false;
+          }
+          return cmd.difficulty == question.difficulty;
+        })
+        .take(2)
+        .map((cmd) => cmd.id)
+        .toList();
+  }
+}
+
+final quizInsightsProvider =
+    StateNotifierProvider<QuizInsightsNotifier, QuizInsightsState>((ref) {
+      return QuizInsightsNotifier();
+    });
 
 class QuizSession {
   const QuizSession({

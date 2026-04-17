@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/utils/command_risk.dart';
 import '../../../core/utils/enums.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_search_bar.dart';
@@ -25,6 +26,7 @@ class AnswersScreen extends ConsumerWidget {
     final objectives = ref.watch(businessObjectivesProvider);
     final topAnswer = ref.watch(topAnswerProvider);
     final advisor = ref.watch(offlineAdvisorResponseProvider);
+    final guided = ref.watch(guidedAnswerResponseProvider);
     final selectedIntentId = ref.watch(selectedIntentIdProvider);
     final selectedPlan = ref.watch(selectedActionPlanProvider);
     final selectedShell = ref.watch(selectedAnswerShellProvider);
@@ -226,6 +228,95 @@ class AnswersScreen extends ConsumerWidget {
                 ),
               ),
             ],
+            if (guided != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Guidage contextuel v2',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: [
+                          Chip(
+                            avatar: const Icon(Icons.tune, size: 18),
+                            label: Text(
+                              '${guided.confidenceLabel} (${(guided.confidence * 100).toStringAsFixed(0)}%)',
+                            ),
+                          ),
+                          Chip(
+                            avatar: Icon(
+                              _riskIcon(guided.riskLevel),
+                              size: 18,
+                              color: _riskColor(guided.riskLevel),
+                            ),
+                            label: Text(guided.riskLabel),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        guided.riskMessage,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Checklist conseillée',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ...guided.checklist.map(
+                        (step) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: Text(
+                            '• $step',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ),
+                      if (guided.keyCommandIds.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
+                          children: guided.keyCommandIds
+                              .map(
+                                (id) => ActionChip(
+                                  label: Text(id.replaceAll('_', ' ')),
+                                  onPressed: () => context.push('/command/$id'),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                      if (guided.alternatives.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          'Alternatives proches',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        ...guided.alternatives.map(
+                          (entry) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(entry.question),
+                            subtitle: Text(entry.shortAnswer),
+                            trailing: const Icon(Icons.chevron_right),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
             if (query.trim().isNotEmpty && topAnswer != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Card(
@@ -299,6 +390,28 @@ class AnswersScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+IconData _riskIcon(CommandRiskLevel level) {
+  switch (level) {
+    case CommandRiskLevel.low:
+      return Icons.check_circle_outline;
+    case CommandRiskLevel.medium:
+      return Icons.warning_amber_rounded;
+    case CommandRiskLevel.high:
+      return Icons.error_outline;
+  }
+}
+
+Color _riskColor(CommandRiskLevel level) {
+  switch (level) {
+    case CommandRiskLevel.low:
+      return Colors.greenAccent;
+    case CommandRiskLevel.medium:
+      return Colors.amberAccent;
+    case CommandRiskLevel.high:
+      return Colors.redAccent;
   }
 }
 

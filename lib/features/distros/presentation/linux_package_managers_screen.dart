@@ -5,6 +5,7 @@ import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import '../data/mock_package_actions.dart';
+import '../data/mock_service_actions.dart';
 import 'widgets/package_action_card.dart';
 
 class LinuxPackageManagersScreen extends StatefulWidget {
@@ -18,10 +19,14 @@ class LinuxPackageManagersScreen extends StatefulWidget {
 class _LinuxPackageManagersScreenState
     extends State<LinuxPackageManagersScreen> {
   String _query = '';
+  _LinuxCommandsMode _mode = _LinuxCommandsMode.packages;
 
   @override
   Widget build(BuildContext context) {
-    final data = mockPackageActions.where((item) {
+    final source = _mode == _LinuxCommandsMode.packages
+        ? mockPackageActions
+        : mockServiceActions;
+    final data = source.where((item) {
       if (_query.trim().isEmpty) return true;
       final q = _query.trim().toLowerCase();
       final haystack = [
@@ -43,10 +48,37 @@ class _LinuxPackageManagersScreenState
               AppSpacing.lg,
               AppSpacing.md,
               AppSpacing.lg,
+              AppSpacing.xs,
+            ),
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('Paquets'),
+                  selected: _mode == _LinuxCommandsMode.packages,
+                  onSelected: (_) =>
+                      setState(() => _mode = _LinuxCommandsMode.packages),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                ChoiceChip(
+                  label: const Text('Services & Logs'),
+                  selected: _mode == _LinuxCommandsMode.services,
+                  onSelected: (_) =>
+                      setState(() => _mode = _LinuxCommandsMode.services),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
               AppSpacing.sm,
             ),
             child: AppSearchBar(
-              hintText: 'Ex: install package, update, pacman -Syu, zypper...',
+              hintText: _mode == _LinuxCommandsMode.packages
+                  ? 'Ex: install, pacman -Syu, zypper refresh...'
+                  : 'Ex: systemctl status, journalctl -u nginx...',
               onChanged: (value) => setState(() => _query = value),
             ),
           ),
@@ -69,3 +101,5 @@ class _LinuxPackageManagersScreenState
     );
   }
 }
+
+enum _LinuxCommandsMode { packages, services }

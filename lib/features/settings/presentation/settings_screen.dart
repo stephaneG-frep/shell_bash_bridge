@@ -41,6 +41,12 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.menu_book_outlined,
             onTap: () => context.go('/guide'),
           ),
+          _SettingTile(
+            title: 'Notes+ perso',
+            subtitle: 'Notes globales, snippets, export/import JSON',
+            icon: Icons.note_alt_outlined,
+            onTap: () => context.go('/notes'),
+          ),
         ],
       ),
     );

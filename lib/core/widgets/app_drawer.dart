@@ -50,6 +50,11 @@ class AppDrawer extends StatelessWidget {
               route: '/answers',
             ),
             _DrawerLink(
+              label: 'Notes+ perso',
+              icon: Icons.note_alt_outlined,
+              route: '/notes',
+            ),
+            _DrawerLink(
               label: 'Parcours guidés',
               icon: Icons.route_outlined,
               route: '/paths',

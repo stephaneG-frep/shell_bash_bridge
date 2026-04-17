@@ -20,6 +20,7 @@ import '../features/compare/data/mock_comparisons.dart';
 import '../features/compare/domain/command_comparison.dart';
 import '../features/paths/data/mock_learning_paths.dart';
 import '../features/paths/domain/learning_path.dart';
+import '../features/notes/domain/personal_snippet.dart';
 import '../features/progress/domain/user_progress.dart';
 import '../features/quiz/data/mock_quiz_questions.dart';
 import '../features/quiz/domain/quiz_question.dart';
@@ -284,6 +285,11 @@ class ActionPlanProgressNotifier
     state = {...state, planId: List<bool>.filled(totalSteps, false)};
     await _save();
   }
+
+  Future<void> setAll(Map<String, List<bool>> values) async {
+    state = values;
+    await _save();
+  }
 }
 
 final actionPlanProgressProvider =
@@ -462,6 +468,11 @@ class UserProgressNotifier extends StateNotifier<UserProgress> {
     await _save();
   }
 
+  Future<void> importProgress(UserProgress progress) async {
+    state = progress;
+    await _save();
+  }
+
   void _recomputeBadges() {
     final badges = <String>{...state.earnedBadges};
 
@@ -575,6 +586,11 @@ class SearchHistoryNotifier extends StateNotifier<List<String>> {
     state = const [];
     await _save();
   }
+
+  Future<void> setAll(List<String> values) async {
+    state = values.take(20).toList();
+    await _save();
+  }
 }
 
 final searchHistoryProvider =
@@ -615,6 +631,11 @@ class CommandNotesNotifier extends StateNotifier<Map<String, String>> {
     state = next;
     await _save();
   }
+
+  Future<void> setAll(Map<String, String> values) async {
+    state = values;
+    await _save();
+  }
 }
 
 final commandNotesProvider =
@@ -649,12 +670,231 @@ class CompletedPathsNotifier extends StateNotifier<Set<String>> {
     state = next;
     await _save();
   }
+
+  Future<void> setAll(Set<String> values) async {
+    state = values;
+    await _save();
+  }
 }
 
 final completedPathIdsProvider =
     StateNotifierProvider<CompletedPathsNotifier, Set<String>>((ref) {
       return CompletedPathsNotifier();
     });
+
+class GlobalNotesNotifier extends StateNotifier<String> {
+  GlobalNotesNotifier() : super('') {
+    _load();
+  }
+
+  static const _storageKey = 'global_notes_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getString(_storageKey) ?? '';
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_storageKey, state);
+  }
+
+  Future<void> setNotes(String notes) async {
+    state = notes;
+    await _save();
+  }
+}
+
+final globalNotesProvider = StateNotifierProvider<GlobalNotesNotifier, String>((
+  ref,
+) {
+  return GlobalNotesNotifier();
+});
+
+class DailyCommandIdsNotifier extends StateNotifier<List<String>> {
+  DailyCommandIdsNotifier() : super(const []) {
+    _load();
+  }
+
+  static const _storageKey = 'daily_command_ids_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getStringList(_storageKey) ?? const [];
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_storageKey, state);
+  }
+
+  Future<void> toggle(String commandId) async {
+    final next = [...state];
+    if (next.contains(commandId)) {
+      next.remove(commandId);
+    } else {
+      next.add(commandId);
+    }
+    state = next;
+    await _save();
+  }
+
+  Future<void> setAll(List<String> ids) async {
+    state = ids;
+    await _save();
+  }
+}
+
+final dailyCommandIdsProvider =
+    StateNotifierProvider<DailyCommandIdsNotifier, List<String>>((ref) {
+      return DailyCommandIdsNotifier();
+    });
+
+final dailyCommandsProvider = Provider<List<CommandItem>>((ref) {
+  final all = ref.watch(allCommandsProvider);
+  final ids = ref.watch(dailyCommandIdsProvider).toSet();
+  return all.where((cmd) => ids.contains(cmd.id)).toList();
+});
+
+class PersonalSnippetsNotifier extends StateNotifier<List<PersonalSnippet>> {
+  PersonalSnippetsNotifier() : super(const []) {
+    _load();
+  }
+
+  static const _storageKey = 'personal_snippets_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_storageKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    final data = jsonDecode(raw) as List<dynamic>;
+    state = data
+        .map((item) => PersonalSnippet.fromMap(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _storageKey,
+      jsonEncode(state.map((e) => e.toMap()).toList()),
+    );
+  }
+
+  Future<void> upsert(PersonalSnippet snippet) async {
+    final next = [...state];
+    final index = next.indexWhere((s) => s.id == snippet.id);
+    if (index == -1) {
+      next.add(snippet);
+    } else {
+      next[index] = snippet;
+    }
+    state = next;
+    await _save();
+  }
+
+  Future<void> remove(String id) async {
+    state = state.where((s) => s.id != id).toList();
+    await _save();
+  }
+
+  Future<void> setAll(List<PersonalSnippet> snippets) async {
+    state = snippets;
+    await _save();
+  }
+}
+
+final personalSnippetsProvider =
+    StateNotifierProvider<PersonalSnippetsNotifier, List<PersonalSnippet>>((
+      ref,
+    ) {
+      return PersonalSnippetsNotifier();
+    });
+
+class AppBackupService {
+  const AppBackupService(this.ref);
+
+  final Ref ref;
+
+  String exportJson() {
+    final payload = <String, dynamic>{
+      'version': 1,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'userProgress': ref.read(userProgressProvider).toMap(),
+      'searchHistory': ref.read(searchHistoryProvider),
+      'commandNotes': ref.read(commandNotesProvider),
+      'completedPathIds': ref.read(completedPathIdsProvider).toList(),
+      'actionPlanProgress': ref.read(actionPlanProgressProvider),
+      'globalNotes': ref.read(globalNotesProvider),
+      'dailyCommandIds': ref.read(dailyCommandIdsProvider),
+      'personalSnippets': ref
+          .read(personalSnippetsProvider)
+          .map((s) => s.toMap())
+          .toList(),
+    };
+    return const JsonEncoder.withIndent('  ').convert(payload);
+  }
+
+  Future<bool> importJson(String raw) async {
+    try {
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final progress = UserProgress.fromMap(
+        data['userProgress'] as Map<String, dynamic>? ?? {},
+      );
+
+      await ref.read(userProgressProvider.notifier).importProgress(progress);
+      await ref
+          .read(searchHistoryProvider.notifier)
+          .setAll(List<String>.from(data['searchHistory'] as List? ?? []));
+      await ref
+          .read(commandNotesProvider.notifier)
+          .setAll(Map<String, String>.from(data['commandNotes'] as Map? ?? {}));
+      await ref
+          .read(completedPathIdsProvider.notifier)
+          .setAll(
+            Set<String>.from(data['completedPathIds'] as List? ?? const []),
+          );
+
+      final actionMapRaw = Map<String, dynamic>.from(
+        data['actionPlanProgress'] as Map? ?? const {},
+      );
+      final actionMap = <String, List<bool>>{};
+      actionMapRaw.forEach((key, value) {
+        actionMap[key] = List<bool>.from((value as List).map((e) => e == true));
+      });
+      await ref.read(actionPlanProgressProvider.notifier).setAll(actionMap);
+
+      await ref
+          .read(globalNotesProvider.notifier)
+          .setNotes(data['globalNotes']?.toString() ?? '');
+      await ref
+          .read(dailyCommandIdsProvider.notifier)
+          .setAll(List<String>.from(data['dailyCommandIds'] as List? ?? []));
+
+      final snippetData = data['personalSnippets'] as List? ?? const [];
+      await ref
+          .read(personalSnippetsProvider.notifier)
+          .setAll(
+            snippetData
+                .map(
+                  (e) => PersonalSnippet.fromMap(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
+                .toList(),
+          );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+final appBackupServiceProvider = Provider<AppBackupService>((ref) {
+  return AppBackupService(ref);
+});
 
 class QuizSession {
   const QuizSession({

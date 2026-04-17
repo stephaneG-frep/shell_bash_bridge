@@ -1,7 +1,9 @@
 import '../../../core/utils/enums.dart';
+import '../../commands/data/mock_commands.dart';
+import '../../compare/data/mock_comparisons.dart';
 import '../domain/quiz_question.dart';
 
-const mockQuizQuestions = <QuizQuestion>[
+const baseMockQuizQuestions = <QuizQuestion>[
   QuizQuestion(
     id: 'q1',
     shellType: ShellType.bash,
@@ -168,3 +170,86 @@ const mockQuizQuestions = <QuizQuestion>[
     difficulty: DifficultyLevel.advanced,
   ),
 ];
+
+final mockQuizQuestions = <QuizQuestion>[
+  ...baseMockQuizQuestions,
+  ..._buildComparisonQuizQuestions(30),
+  ..._buildShellDetectionQuizQuestions(25),
+];
+
+List<QuizQuestion> _buildComparisonQuizQuestions(int count) {
+  final data = mockComparisons.take(count).toList();
+  final pool = mockComparisons
+      .map((item) => item.powershellCommand)
+      .toSet()
+      .toList();
+
+  return data.asMap().entries.map((entry) {
+    final i = entry.key;
+    final item = entry.value;
+    final correct = item.powershellCommand;
+    final wrongs = <String>[];
+
+    var cursor = (i * 5 + 3) % pool.length;
+    while (wrongs.length < 3) {
+      final candidate = pool[cursor];
+      if (candidate != correct && !wrongs.contains(candidate)) {
+        wrongs.add(candidate);
+      }
+      cursor = (cursor + 7) % pool.length;
+    }
+
+    final options = <String>[correct, ...wrongs];
+    final shift = i % options.length;
+    final rotated = [...options.sublist(shift), ...options.sublist(0, shift)];
+    final correctIndex = rotated.indexOf(correct);
+
+    return QuizQuestion(
+      id: 'q_auto_cmp_${i + 1}',
+      shellType: null,
+      question:
+          'Quel équivalent PowerShell correspond à `${item.bashCommand}` ?',
+      options: rotated,
+      correctAnswerIndex: correctIndex,
+      explanation:
+          'Pour l’action "${item.actionTitle}", la bonne commande est `${item.powershellCommand}`.',
+      difficulty: _difficultyFromIndex(i),
+    );
+  }).toList();
+}
+
+List<QuizQuestion> _buildShellDetectionQuizQuestions(int count) {
+  final candidates = mockCommands
+      .where((cmd) => cmd.name.length > 2)
+      .take(count)
+      .toList();
+
+  const options = ['Bash', 'PowerShell', 'Les deux', 'Aucun'];
+
+  return candidates.asMap().entries.map((entry) {
+    final i = entry.key;
+    final cmd = entry.value;
+
+    final correctLabel = cmd.shellType == ShellType.bash
+        ? 'Bash'
+        : 'PowerShell';
+    final correctIndex = options.indexOf(correctLabel);
+
+    return QuizQuestion(
+      id: 'q_auto_shell_${i + 1}',
+      shellType: cmd.shellType,
+      question:
+          'Dans quel shell la commande `${cmd.name}` est-elle principalement utilisée ?',
+      options: options,
+      correctAnswerIndex: correctIndex,
+      explanation: '`${cmd.name}` est une commande de ${cmd.shellType.label}.',
+      difficulty: _difficultyFromIndex(i + 30),
+    );
+  }).toList();
+}
+
+DifficultyLevel _difficultyFromIndex(int i) {
+  if (i % 3 == 0) return DifficultyLevel.beginner;
+  if (i % 3 == 1) return DifficultyLevel.intermediate;
+  return DifficultyLevel.advanced;
+}

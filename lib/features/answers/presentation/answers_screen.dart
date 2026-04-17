@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/utils/enums.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import '../../../providers/app_providers.dart';
@@ -20,8 +21,11 @@ class AnswersScreen extends ConsumerWidget {
     final history = ref.watch(searchHistoryProvider);
     final intents = ref.watch(answerIntentPresetsProvider);
     final topAnswer = ref.watch(topAnswerProvider);
+    final advisor = ref.watch(offlineAdvisorResponseProvider);
     final selectedIntentId = ref.watch(selectedIntentIdProvider);
     final selectedPlan = ref.watch(selectedActionPlanProvider);
+    final selectedShell = ref.watch(selectedAnswerShellProvider);
+    final selectedDifficulty = ref.watch(selectedAnswerDifficultyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -53,6 +57,85 @@ class AnswersScreen extends ConsumerWidget {
               },
             ),
             const SizedBox(height: AppSpacing.sm),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Contexte de réponse',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Tous shells'),
+                          selected: selectedShell == null,
+                          onSelected: (_) =>
+                              ref
+                                      .read(
+                                        selectedAnswerShellProvider.notifier,
+                                      )
+                                      .state =
+                                  null,
+                        ),
+                        ...ShellType.values.map(
+                          (shell) => ChoiceChip(
+                            label: Text(shell.label),
+                            selected: selectedShell == shell,
+                            onSelected: (_) =>
+                                ref
+                                        .read(
+                                          selectedAnswerShellProvider.notifier,
+                                        )
+                                        .state =
+                                    shell,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Tous niveaux'),
+                          selected: selectedDifficulty == null,
+                          onSelected: (_) =>
+                              ref
+                                      .read(
+                                        selectedAnswerDifficultyProvider
+                                            .notifier,
+                                      )
+                                      .state =
+                                  null,
+                        ),
+                        ...DifficultyLevel.values.map(
+                          (level) => ChoiceChip(
+                            label: Text(level.label),
+                            selected: selectedDifficulty == level,
+                            onSelected: (_) =>
+                                ref
+                                        .read(
+                                          selectedAnswerDifficultyProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    level,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
             _AssistantOfflineCard(
               intents: intents,
               selectedIntentId: selectedIntentId,
@@ -65,6 +148,58 @@ class AnswersScreen extends ConsumerWidget {
             if (selectedPlan != null) ...[
               const SizedBox(height: AppSpacing.sm),
               ActionPlanCard(plan: selectedPlan),
+            ],
+            if (advisor != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        advisor.title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        advisor.context,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        advisor.summary,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      ...advisor.steps.map(
+                        (step) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: Text(
+                            '• $step',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ),
+                      if (advisor.commandIds.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
+                          children: advisor.commandIds
+                              .map(
+                                (id) => ActionChip(
+                                  label: Text(id.replaceAll('_', ' ')),
+                                  onPressed: () => context.push('/command/$id'),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
             ],
             if (query.trim().isNotEmpty && topAnswer != null) ...[
               const SizedBox(height: AppSpacing.sm),

@@ -52,11 +52,31 @@ final answerIntentPresetsProvider = Provider<List<AnswerIntent>>((ref) {
 
 final answerQueryProvider = StateProvider<String>((ref) => '');
 final selectedIntentIdProvider = StateProvider<String?>((ref) => null);
+final selectedAnswerShellProvider = StateProvider<ShellType?>((ref) => null);
+final selectedAnswerDifficultyProvider = StateProvider<DifficultyLevel?>(
+  (ref) => null,
+);
 
 final filteredAnswersProvider = Provider<List<AnswerEntry>>((ref) {
   final query = ref.watch(answerQueryProvider).trim().toLowerCase();
   final answers = ref.watch(answersProvider);
-  if (query.isEmpty) return answers;
+  final selectedShell = ref.watch(selectedAnswerShellProvider);
+  final selectedDifficulty = ref.watch(selectedAnswerDifficultyProvider);
+  if (query.isEmpty) {
+    return answers.where((entry) {
+      if (selectedShell != null &&
+          entry.shellType != null &&
+          entry.shellType != selectedShell) {
+        return false;
+      }
+      if (selectedDifficulty != null &&
+          entry.targetDifficulty != null &&
+          entry.targetDifficulty != selectedDifficulty) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
 
   final tokens = query
       .split(RegExp(r'\s+'))
@@ -82,6 +102,24 @@ final filteredAnswersProvider = Provider<List<AnswerEntry>>((ref) {
         score += 3;
       }
     }
+
+    if (selectedShell != null) {
+      if (entry.shellType == selectedShell || entry.shellType == null) {
+        score += 4;
+      } else {
+        score -= 3;
+      }
+    }
+
+    if (selectedDifficulty != null) {
+      if (entry.targetDifficulty == selectedDifficulty ||
+          entry.targetDifficulty == null) {
+        score += 3;
+      } else {
+        score -= 2;
+      }
+    }
+
     return score;
   }
 
@@ -101,6 +139,59 @@ final topAnswerProvider = Provider<AnswerEntry?>((ref) {
     return null;
   }
   return answers.first;
+});
+
+class OfflineAdvisorResponse {
+  const OfflineAdvisorResponse({
+    required this.title,
+    required this.context,
+    required this.summary,
+    required this.steps,
+    required this.commandIds,
+  });
+
+  final String title;
+  final String context;
+  final String summary;
+  final List<String> steps;
+  final List<String> commandIds;
+}
+
+final offlineAdvisorResponseProvider = Provider<OfflineAdvisorResponse?>((ref) {
+  final answer = ref.watch(topAnswerProvider);
+  final plan = ref.watch(selectedActionPlanProvider);
+  final shell = ref.watch(selectedAnswerShellProvider);
+  final difficulty = ref.watch(selectedAnswerDifficultyProvider);
+  if (answer == null) {
+    return null;
+  }
+
+  final contextParts = <String>[
+    shell?.label ?? 'Tous shells',
+    difficulty?.label ?? 'Tous niveaux',
+  ];
+
+  final mergedSteps = <String>[
+    ...answer.steps,
+    if (difficulty == DifficultyLevel.beginner)
+      'Commence par exécuter la version la plus simple de la commande.',
+    if (difficulty == DifficultyLevel.advanced)
+      'Ajoute des options avancées seulement après validation du résultat.',
+    if (plan != null) ...plan.steps.take(2),
+  ];
+
+  final mergedCommands = <String>{
+    ...answer.relatedCommandIds,
+    if (plan != null) ...plan.commandIds,
+  }.toList();
+
+  return OfflineAdvisorResponse(
+    title: 'Réponse ciblée',
+    context: contextParts.join(' • '),
+    summary: answer.shortAnswer,
+    steps: mergedSteps.take(6).toList(),
+    commandIds: mergedCommands.take(6).toList(),
+  );
 });
 
 final actionPlansProvider = Provider<List<ActionPlan>>((ref) {

@@ -9,6 +9,7 @@ class AnswerEntry {
     required this.tags,
     required this.relatedCommandIds,
     this.shellType,
+    this.targetDifficulty,
   });
 
   final String id;
@@ -18,4 +19,5 @@ class AnswerEntry {
   final List<String> tags;
   final List<String> relatedCommandIds;
   final ShellType? shellType;
+  final DifficultyLevel? targetDifficulty;
 }

@@ -13,6 +13,7 @@ const mockAnswers = <AnswerEntry>[
     ],
     tags: ['dossier', 'chemin', 'where am i', 'pwd', 'get-location'],
     relatedCommandIds: ['bash_pwd', 'ps_get_location'],
+    targetDifficulty: DifficultyLevel.beginner,
   ),
   AnswerEntry(
     id: 'a_list_files',
@@ -25,6 +26,7 @@ const mockAnswers = <AnswerEntry>[
     ],
     tags: ['liste', 'fichiers', 'cachés', 'ls', 'dir'],
     relatedCommandIds: ['bash_ls', 'ps_get_child_item'],
+    targetDifficulty: DifficultyLevel.beginner,
   ),
   AnswerEntry(
     id: 'a_change_dir',
@@ -42,6 +44,7 @@ const mockAnswers = <AnswerEntry>[
       'bash_pwd',
       'ps_get_location',
     ],
+    targetDifficulty: DifficultyLevel.beginner,
   ),
   AnswerEntry(
     id: 'a_create_file',
@@ -54,6 +57,7 @@ const mockAnswers = <AnswerEntry>[
     ],
     tags: ['créer fichier', 'touch', 'new-item'],
     relatedCommandIds: ['bash_touch', 'ps_new_item'],
+    targetDifficulty: DifficultyLevel.beginner,
   ),
   AnswerEntry(
     id: 'a_copy_move',
@@ -67,6 +71,7 @@ const mockAnswers = <AnswerEntry>[
     ],
     tags: ['copier', 'déplacer', 'cp', 'mv', 'copy-item', 'move-item'],
     relatedCommandIds: ['bash_cp', 'bash_mv', 'ps_copy_item', 'ps_move_item'],
+    targetDifficulty: DifficultyLevel.intermediate,
   ),
   AnswerEntry(
     id: 'a_delete_safe',
@@ -85,6 +90,7 @@ const mockAnswers = <AnswerEntry>[
       'ps_test_path',
       'bash_pwd',
     ],
+    targetDifficulty: DifficultyLevel.intermediate,
   ),
   AnswerEntry(
     id: 'a_find_text',
@@ -97,6 +103,7 @@ const mockAnswers = <AnswerEntry>[
     ],
     tags: ['recherche texte', 'grep', 'select-string', 'pattern'],
     relatedCommandIds: ['bash_grep', 'ps_select_string'],
+    targetDifficulty: DifficultyLevel.intermediate,
   ),
   AnswerEntry(
     id: 'a_process',
@@ -109,6 +116,7 @@ const mockAnswers = <AnswerEntry>[
     ],
     tags: ['processus', 'ps', 'top', 'get-process'],
     relatedCommandIds: ['bash_ps', 'bash_top', 'ps_get_process'],
+    targetDifficulty: DifficultyLevel.intermediate,
   ),
   AnswerEntry(
     id: 'a_vars_ps',
@@ -123,6 +131,7 @@ const mockAnswers = <AnswerEntry>[
     tags: ['variable', 'powershell', 'set-variable', 'get-variable'],
     relatedCommandIds: ['ps_set_variable', 'ps_get_variable'],
     shellType: ShellType.powershell,
+    targetDifficulty: DifficultyLevel.advanced,
   ),
   AnswerEntry(
     id: 'a_quiz_progress',
@@ -142,5 +151,6 @@ const mockAnswers = <AnswerEntry>[
       'ps_get_location',
       'ps_get_child_item',
     ],
+    targetDifficulty: DifficultyLevel.beginner,
   ),
 ];

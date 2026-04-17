@@ -8,6 +8,7 @@ import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import '../../../providers/app_providers.dart';
 import '../domain/answer_intent.dart';
+import '../domain/business_objective.dart';
 import 'widgets/action_plan_card.dart';
 import 'widgets/answer_card.dart';
 
@@ -20,6 +21,7 @@ class AnswersScreen extends ConsumerWidget {
     final answers = ref.watch(filteredAnswersProvider);
     final history = ref.watch(searchHistoryProvider);
     final intents = ref.watch(answerIntentPresetsProvider);
+    final objectives = ref.watch(businessObjectivesProvider);
     final topAnswer = ref.watch(topAnswerProvider);
     final advisor = ref.watch(offlineAdvisorResponseProvider);
     final selectedIntentId = ref.watch(selectedIntentIdProvider);
@@ -143,6 +145,27 @@ class AnswersScreen extends ConsumerWidget {
                 ref.read(answerQueryProvider.notifier).state = intent.query;
                 ref.read(searchHistoryProvider.notifier).add(intent.query);
                 ref.read(selectedIntentIdProvider.notifier).state = intent.id;
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _BusinessObjectivesCard(
+              objectives: objectives,
+              onSelectObjective: (objective) {
+                ref.read(selectedIntentIdProvider.notifier).state =
+                    objective.intentId;
+                ref.read(answerQueryProvider.notifier).state = objective.title
+                    .toLowerCase();
+                if (objective.shellType != null) {
+                  ref.read(selectedAnswerShellProvider.notifier).state =
+                      objective.shellType;
+                }
+                if (objective.targetDifficulty != null) {
+                  ref.read(selectedAnswerDifficultyProvider.notifier).state =
+                      objective.targetDifficulty;
+                }
+                ref
+                    .read(searchHistoryProvider.notifier)
+                    .add(objective.title.toLowerCase());
               },
             ),
             if (selectedPlan != null) ...[
@@ -270,6 +293,59 @@ class AnswersScreen extends ConsumerWidget {
               )
             else
               ...answers.map((entry) => AnswerCard(entry: entry)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BusinessObjectivesCard extends StatelessWidget {
+  const _BusinessObjectivesCard({
+    required this.objectives,
+    required this.onSelectObjective,
+  });
+
+  final List<BusinessObjective> objectives;
+  final ValueChanged<BusinessObjective> onSelectObjective;
+
+  @override
+  Widget build(BuildContext context) {
+    if (objectives.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Objectifs métier',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Choisis un cas concret et lance un plan prêt à exécuter.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ...objectives.map(
+              (objective) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: ListTile(
+                  tileColor: Theme.of(context).colorScheme.surfaceContainer,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  title: Text(objective.title),
+                  subtitle: Text(objective.description),
+                  trailing: const Icon(Icons.play_circle_outline),
+                  onTap: () => onSelectObjective(objective),
+                ),
+              ),
+            ),
           ],
         ),
       ),

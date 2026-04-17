@@ -9,9 +9,11 @@ import '../features/categories/domain/command_category.dart';
 import '../features/answers/data/mock_answers.dart';
 import '../features/answers/data/intent_presets.dart';
 import '../features/answers/data/action_plan_templates.dart';
+import '../features/answers/data/mock_business_objectives.dart';
 import '../features/answers/domain/action_plan.dart';
 import '../features/answers/domain/answer_intent.dart';
 import '../features/answers/domain/answer_entry.dart';
+import '../features/answers/domain/business_objective.dart';
 import '../features/commands/data/commands_repository.dart';
 import '../features/commands/domain/command_item.dart';
 import '../features/compare/data/mock_comparisons.dart';
@@ -48,6 +50,24 @@ final answersProvider = Provider<List<AnswerEntry>>((ref) {
 
 final answerIntentPresetsProvider = Provider<List<AnswerIntent>>((ref) {
   return intentPresets;
+});
+final businessObjectivesProvider = Provider<List<BusinessObjective>>((ref) {
+  final shell = ref.watch(selectedAnswerShellProvider);
+  final difficulty = ref.watch(selectedAnswerDifficultyProvider);
+
+  return mockBusinessObjectives.where((objective) {
+    if (shell != null &&
+        objective.shellType != null &&
+        objective.shellType != shell) {
+      return false;
+    }
+    if (difficulty != null &&
+        objective.targetDifficulty != null &&
+        objective.targetDifficulty != difficulty) {
+      return false;
+    }
+    return true;
+  }).toList();
 });
 
 final answerQueryProvider = StateProvider<String>((ref) => '');

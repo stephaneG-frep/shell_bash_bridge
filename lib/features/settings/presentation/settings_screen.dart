@@ -42,6 +42,12 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => context.go('/guide'),
           ),
           _SettingTile(
+            title: 'Commandes paquets Linux',
+            subtitle: 'Équivalences apt, pacman, dnf, zypper',
+            icon: Icons.inventory_2_outlined,
+            onTap: () => context.go('/linux-packages'),
+          ),
+          _SettingTile(
             title: 'Notes+ perso',
             subtitle: 'Notes globales, snippets, export/import JSON',
             icon: Icons.note_alt_outlined,

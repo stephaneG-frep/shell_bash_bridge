@@ -50,6 +50,11 @@ class AppDrawer extends StatelessWidget {
               route: '/answers',
             ),
             _DrawerLink(
+              label: 'Paquets Linux (apt/pacman...)',
+              icon: Icons.inventory_2_outlined,
+              route: '/linux-packages',
+            ),
+            _DrawerLink(
               label: 'Notes+ perso',
               icon: Icons.note_alt_outlined,
               route: '/notes',

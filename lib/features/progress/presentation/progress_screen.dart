@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../providers/app_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ class ProgressScreen extends ConsumerWidget {
     final progress = ref.watch(userProgressProvider);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('Progression')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),

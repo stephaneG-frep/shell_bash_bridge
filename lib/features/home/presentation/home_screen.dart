@@ -7,6 +7,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/enums.dart';
 import '../../../core/widgets/app_search_bar.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../providers/app_providers.dart';
 import '../../commands/presentation/widgets/command_list_item.dart';
@@ -25,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
     final completedPaths = ref.watch(completedPathIdsProvider).length;
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Shell-Bash-Bridge'),
         actions: [

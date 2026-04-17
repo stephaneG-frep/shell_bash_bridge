@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/utils/enums.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../providers/app_providers.dart';
 import '../presentation/widgets/category_grid.dart';
@@ -22,6 +23,7 @@ class PowerShellScreen extends ConsumerWidget {
         .toList();
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('PowerShell')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),

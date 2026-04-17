@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/utils/enums.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import '../../../providers/app_providers.dart';
 import '../../commands/presentation/widgets/command_list_item.dart';
@@ -26,6 +27,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
     }).toList();
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('Favoris')),
       body: Column(
         children: [

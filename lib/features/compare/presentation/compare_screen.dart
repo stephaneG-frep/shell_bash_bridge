@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/widgets/app_search_bar.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import '../../../providers/app_providers.dart';
 import 'widgets/comparison_card.dart';
@@ -29,6 +30,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
     }).toList();
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('Compare Bash ↔ PowerShell')),
       body: Column(
         children: [

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/utils/enums.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../providers/app_providers.dart';
 import 'widgets/quiz_option_tile.dart';
 
@@ -19,6 +20,7 @@ class QuizScreen extends ConsumerWidget {
 
     if (state.questions.isEmpty) {
       return const Scaffold(
+        drawer: AppDrawer(),
         body: Center(child: Text('Aucune question disponible.')),
       );
     }
@@ -41,6 +43,7 @@ class QuizScreen extends ConsumerWidget {
     final question = state.currentQuestion;
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: Text('Quiz ${shellType?.label ?? 'Global'}')),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),

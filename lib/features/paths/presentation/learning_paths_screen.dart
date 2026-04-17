@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../providers/app_providers.dart';
 import 'widgets/path_card.dart';
 
@@ -14,6 +15,7 @@ class LearningPathsScreen extends ConsumerWidget {
     final completedIds = ref.watch(completedPathIdsProvider);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('Parcours guidés')),
       body: ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.lg),

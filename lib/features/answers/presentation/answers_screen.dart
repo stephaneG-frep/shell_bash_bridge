@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/utils/enums.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import '../../../providers/app_providers.dart';
@@ -30,6 +31,7 @@ class AnswersScreen extends ConsumerWidget {
     final selectedDifficulty = ref.watch(selectedAnswerDifficultyProvider);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Centre de réponses'),
         actions: [

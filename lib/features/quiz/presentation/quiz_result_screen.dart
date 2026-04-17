@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/widgets/app_drawer.dart';
 
 class QuizResultScreen extends StatelessWidget {
   const QuizResultScreen({super.key, required this.score, required this.total});
@@ -14,6 +15,7 @@ class QuizResultScreen extends StatelessWidget {
     final ratio = total == 0 ? 0 : score / total;
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('Résultat du quiz')),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/difficulty_badge.dart';
 import '../../../core/widgets/shell_chip.dart';
 import '../../../core/widgets/terminal_code_block.dart';
@@ -18,7 +19,10 @@ class CommandDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final command = ref.watch(commandByIdProvider(commandId));
     if (command == null) {
-      return const Scaffold(body: Center(child: Text('Commande introuvable.')));
+      return const Scaffold(
+        drawer: AppDrawer(),
+        body: Center(child: Text('Commande introuvable.')),
+      );
     }
 
     final progress = ref.watch(userProgressProvider);
@@ -37,6 +41,7 @@ class CommandDetailScreen extends ConsumerWidget {
     });
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text(command.name),
         actions: [

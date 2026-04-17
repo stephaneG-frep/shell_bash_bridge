@@ -14,6 +14,8 @@ import '../features/paths/presentation/learning_paths_screen.dart';
 import '../features/progress/presentation/progress_screen.dart';
 import '../features/quiz/presentation/quiz_result_screen.dart';
 import '../features/quiz/presentation/quiz_screen.dart';
+import '../features/review/presentation/review_session_screen.dart';
+import '../features/search/presentation/unified_search_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/shells/presentation/bash_screen.dart';
 import '../features/shells/presentation/powershell_screen.dart';
@@ -87,6 +89,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/answers',
       builder: (context, state) => const AnswersScreen(),
+    ),
+    GoRoute(
+      path: '/review',
+      builder: (context, state) => const ReviewSessionScreen(),
+    ),
+    GoRoute(
+      path: '/search',
+      builder: (context, state) => const UnifiedSearchScreen(),
     ),
     GoRoute(
       path: '/powershell',

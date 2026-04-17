@@ -50,6 +50,16 @@ class AppDrawer extends StatelessWidget {
               route: '/answers',
             ),
             _DrawerLink(
+              label: 'Recherche unifiée',
+              icon: Icons.travel_explore_outlined,
+              route: '/search',
+            ),
+            _DrawerLink(
+              label: 'Révision 10 min',
+              icon: Icons.timer_outlined,
+              route: '/review',
+            ),
+            _DrawerLink(
               label: 'Paquets Linux (apt/pacman...)',
               icon: Icons.inventory_2_outlined,
               route: '/linux-packages',

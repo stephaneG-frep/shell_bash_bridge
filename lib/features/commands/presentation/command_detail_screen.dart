@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/utils/command_risk.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/difficulty_badge.dart';
+import '../../../core/widgets/risk_badge.dart';
 import '../../../core/widgets/shell_chip.dart';
 import '../../../core/widgets/terminal_code_block.dart';
 import '../../../providers/app_providers.dart';
@@ -29,6 +31,7 @@ class CommandDetailScreen extends ConsumerWidget {
     final notes = ref.watch(commandNotesProvider);
     final safeModeEnabled = ref.watch(safeCommandModeProvider);
     final favoriteCollections = ref.watch(favoriteCollectionsProvider);
+    final risk = assessCommandRisk(name: command.name, syntax: command.syntax);
     final isFavorite = progress.favoriteCommandIds.contains(command.id);
     final currentNote = notes[command.id] ?? '';
     final shellTotal = ref
@@ -65,6 +68,8 @@ class CommandDetailScreen extends ConsumerWidget {
               ShellChip(shellType: command.shellType),
               const SizedBox(width: AppSpacing.sm),
               DifficultyBadge(level: command.difficulty),
+              const SizedBox(width: AppSpacing.sm),
+              RiskBadge(risk: risk),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -88,6 +93,7 @@ class CommandDetailScreen extends ConsumerWidget {
             commandId: command.id,
             collections: favoriteCollections,
           ),
+          if (risk.level != CommandRiskLevel.low) _RiskWarningCard(risk: risk),
           if (safeModeEnabled &&
               _isSensitiveCommand(command.name, command.syntax))
             _SafeCommandChecklistCard(
@@ -109,6 +115,42 @@ class CommandDetailScreen extends ConsumerWidget {
           ),
           _ListInfoCard(title: 'Conseils', values: command.tips),
         ],
+      ),
+    );
+  }
+}
+
+class _RiskWarningCard extends StatelessWidget {
+  const _RiskWarningCard({required this.risk});
+
+  final CommandRisk risk;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = risk.level == CommandRiskLevel.high
+        ? Colors.redAccent
+        : Colors.amberAccent;
+    return Card(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.6)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.warning_amber_rounded, color: color),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                risk.message,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

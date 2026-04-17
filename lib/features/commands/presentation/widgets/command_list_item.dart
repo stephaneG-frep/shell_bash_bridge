@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/command_risk.dart';
 import '../../../../core/widgets/difficulty_badge.dart';
+import '../../../../core/widgets/risk_badge.dart';
 import '../../../../core/widgets/shell_chip.dart';
 import '../../domain/command_item.dart';
 
@@ -20,6 +22,7 @@ class CommandListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final risk = assessCommandRisk(name: command.name, syntax: command.syntax);
     return Card(
       child: ListTile(
         onTap: onTap,
@@ -39,6 +42,8 @@ class CommandListItem extends StatelessWidget {
                 ShellChip(shellType: command.shellType),
                 const SizedBox(width: 8),
                 DifficultyBadge(level: command.difficulty),
+                const SizedBox(width: 8),
+                RiskBadge(risk: risk),
               ],
             ),
           ],

@@ -70,6 +70,21 @@ class HomeScreen extends ConsumerWidget {
               onTap: () => context.push('/answers'),
             ),
             HomeHeroCard(
+              title: 'Recherche unifiée',
+              subtitle:
+                  'Cherche partout: commandes, objectifs, snippets, distros.',
+              icon: Icons.travel_explore_outlined,
+              color: AppColors.powershellAccent,
+              onTap: () => context.push('/search'),
+            ),
+            HomeHeroCard(
+              title: 'Révision 10 min',
+              subtitle: 'Session rapide: 3 commandes, 1 objectif, 5 questions.',
+              icon: Icons.timer_outlined,
+              color: AppColors.bashAccent,
+              onTap: () => context.push('/review'),
+            ),
+            HomeHeroCard(
               title: 'Apprendre Bash',
               subtitle: 'Navigation, fichiers, système, scripts.',
               icon: Icons.terminal,

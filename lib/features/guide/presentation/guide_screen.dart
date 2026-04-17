@@ -67,7 +67,12 @@ class GuideScreen extends StatelessWidget {
           _GuideSection(
             title: '11. Révision intelligente',
             content:
-                'Utilise Quiz + Progression pour identifier tes lacunes, refaire des sessions courtes et renforcer la mémorisation.',
+                'Lance Révision 10 min: 3 commandes + 1 objectif + 5 questions pour consolider rapidement.',
+          ),
+          _GuideSection(
+            title: '12. Recherche unifiée',
+            content:
+                'La recherche globale explore commandes, centre de réponses, objectifs métier, paquets/services Linux et snippets personnels.',
           ),
           _GuideSection(
             title: 'Conseil méthode',

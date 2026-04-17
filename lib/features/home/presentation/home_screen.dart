@@ -61,7 +61,8 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
             HomeHeroCard(
               title: 'Trouver ma réponse',
-              subtitle: 'Question libre, réponse guidée et commandes liées.',
+              subtitle:
+                  'Assistant offline: intention -> réponse ciblée en 1 tap.',
               icon: Icons.psychology_alt_outlined,
               color: AppColors.secondaryAccent,
               onTap: () => context.push('/answers'),

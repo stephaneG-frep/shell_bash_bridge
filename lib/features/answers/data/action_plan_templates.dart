@@ -1,0 +1,128 @@
+import '../domain/action_plan.dart';
+
+const actionPlanTemplates = <ActionPlan>[
+  ActionPlan(
+    id: 'plan_list_files',
+    intentId: 'intent_list_files',
+    title: 'Plan: lister les fichiers proprement',
+    description:
+        'Voir rapidement le contenu d’un dossier dans les deux shells.',
+    steps: [
+      'Identifier le dossier cible.',
+      'Afficher le dossier courant.',
+      'Lister tous les éléments, y compris cachés.',
+      'Confirmer les noms avant action suivante.',
+    ],
+    commandIds: ['bash_pwd', 'ps_get_location', 'bash_ls', 'ps_get_child_item'],
+    safetyTips: [
+      'Vérifie toujours le chemin courant avant suppression ou déplacement.',
+    ],
+  ),
+  ActionPlan(
+    id: 'plan_change_directory',
+    intentId: 'intent_change_directory',
+    title: 'Plan: changer de dossier sans erreur',
+    description: 'Procédure sûre pour naviguer rapidement.',
+    steps: [
+      'Copier le chemin exact.',
+      'Utiliser cd ou Set-Location.',
+      'Vérifier la position après déplacement.',
+      'Lister pour confirmer le bon dossier.',
+    ],
+    commandIds: ['bash_cd', 'ps_set_location', 'bash_pwd', 'bash_ls'],
+    safetyTips: ['Entoure les chemins avec espaces par des guillemets.'],
+  ),
+  ActionPlan(
+    id: 'plan_safe_delete',
+    intentId: 'intent_safe_delete',
+    title: 'Plan: suppression sécurisée',
+    description: 'Réduire au maximum le risque de mauvaise suppression.',
+    steps: [
+      'Confirmer dossier courant.',
+      'Tester que la cible existe.',
+      'Lister le contenu de la cible.',
+      'Supprimer explicitement la cible.',
+      'Relister pour vérifier le résultat.',
+    ],
+    commandIds: [
+      'bash_pwd',
+      'ps_test_path',
+      'bash_ls',
+      'bash_rm',
+      'ps_remove_item',
+    ],
+    safetyTips: ['En PowerShell, privilégie -WhatIf avant suppression réelle.'],
+  ),
+  ActionPlan(
+    id: 'plan_find_text',
+    intentId: 'intent_find_text',
+    title: 'Plan: recherche texte ciblée',
+    description: 'Trouver vite une info dans fichiers ou logs.',
+    steps: [
+      'Définir un motif précis.',
+      'Lancer la recherche récursive.',
+      'Identifier les lignes pertinentes.',
+      'Ouvrir le fichier ciblé pour vérification.',
+    ],
+    commandIds: ['bash_grep', 'ps_select_string', 'bash_cat', 'ps_get_content'],
+    safetyTips: ['Commence avec un dossier restreint pour éviter le bruit.'],
+  ),
+  ActionPlan(
+    id: 'plan_view_processes',
+    intentId: 'intent_view_processes',
+    title: 'Plan: diagnostiquer un processus',
+    description: 'Obtenir rapidement la liste des processus utiles.',
+    steps: [
+      'Afficher la liste des processus.',
+      'Repérer le nom recherché.',
+      'Comparer consommation CPU/mémoire.',
+      'Relancer la vérification après action.',
+    ],
+    commandIds: ['bash_ps', 'bash_top', 'ps_get_process'],
+    safetyTips: ['Évite de terminer un processus sans confirmer son rôle.'],
+  ),
+  ActionPlan(
+    id: 'plan_create_file',
+    intentId: 'intent_create_file',
+    title: 'Plan: créer un fichier utilisable',
+    description: 'Créer puis vérifier un fichier rapidement.',
+    steps: [
+      'Créer le fichier.',
+      'Écrire une première ligne.',
+      'Lire le contenu.',
+      'Sauvegarder la commande en favori si utile.',
+    ],
+    commandIds: ['bash_touch', 'ps_new_item', 'bash_echo', 'bash_cat'],
+    safetyTips: ['Utilise >> pour ajouter sans écraser.'],
+  ),
+  ActionPlan(
+    id: 'plan_copy_move',
+    intentId: 'intent_copy_move',
+    title: 'Plan: copier puis déplacer proprement',
+    description: 'Éviter les pertes de fichiers lors des manipulations.',
+    steps: [
+      'Copier la source vers destination de test.',
+      'Vérifier la copie.',
+      'Déplacer ou renommer ensuite.',
+      'Relister dossier source et destination.',
+    ],
+    commandIds: ['bash_cp', 'ps_copy_item', 'bash_mv', 'ps_move_item'],
+    safetyTips: ['Teste d’abord sur un fichier non critique.'],
+  ),
+  ActionPlan(
+    id: 'plan_powershell_variables',
+    intentId: 'intent_powershell_variables',
+    title: 'Plan: variables PowerShell utiles',
+    description: 'Mettre en place des variables de session fiables.',
+    steps: [
+      'Créer une variable explicite.',
+      'Lire la variable.',
+      'Réutiliser la variable dans une commande.',
+      'Lister les variables pertinentes.',
+    ],
+    commandIds: ['ps_set_variable', 'ps_get_variable'],
+    safetyTips: [
+      'Différencie variables de session et variables d’environnement.',
+    ],
+  ),
+];

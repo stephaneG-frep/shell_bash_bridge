@@ -7,6 +7,10 @@ import '../core/constants/app_strings.dart';
 import '../core/utils/enums.dart';
 import '../features/categories/domain/command_category.dart';
 import '../features/answers/data/mock_answers.dart';
+import '../features/answers/data/intent_presets.dart';
+import '../features/answers/data/action_plan_templates.dart';
+import '../features/answers/domain/action_plan.dart';
+import '../features/answers/domain/answer_intent.dart';
 import '../features/answers/domain/answer_entry.dart';
 import '../features/commands/data/commands_repository.dart';
 import '../features/commands/domain/command_item.dart';
@@ -42,7 +46,12 @@ final answersProvider = Provider<List<AnswerEntry>>((ref) {
   return mockAnswers;
 });
 
+final answerIntentPresetsProvider = Provider<List<AnswerIntent>>((ref) {
+  return intentPresets;
+});
+
 final answerQueryProvider = StateProvider<String>((ref) => '');
+final selectedIntentIdProvider = StateProvider<String?>((ref) => null);
 
 final filteredAnswersProvider = Provider<List<AnswerEntry>>((ref) {
   final query = ref.watch(answerQueryProvider).trim().toLowerCase();
@@ -85,6 +94,93 @@ final filteredAnswersProvider = Provider<List<AnswerEntry>>((ref) {
 
   return ranked.map((item) => item.entry).toList();
 });
+
+final topAnswerProvider = Provider<AnswerEntry?>((ref) {
+  final answers = ref.watch(filteredAnswersProvider);
+  if (answers.isEmpty) {
+    return null;
+  }
+  return answers.first;
+});
+
+final actionPlansProvider = Provider<List<ActionPlan>>((ref) {
+  return actionPlanTemplates;
+});
+
+final selectedActionPlanProvider = Provider<ActionPlan?>((ref) {
+  final selectedIntentId = ref.watch(selectedIntentIdProvider);
+  if (selectedIntentId == null) {
+    return null;
+  }
+  final plans = ref.watch(actionPlansProvider);
+  for (final plan in plans) {
+    if (plan.intentId == selectedIntentId) {
+      return plan;
+    }
+  }
+  return null;
+});
+
+class ActionPlanProgressNotifier
+    extends StateNotifier<Map<String, List<bool>>> {
+  ActionPlanProgressNotifier() : super(const {}) {
+    _load();
+  }
+
+  static const _storageKey = 'action_plan_progress_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_storageKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final parsed = <String, List<bool>>{};
+    decoded.forEach((key, value) {
+      parsed[key] = List<bool>.from((value as List).map((e) => e == true));
+    });
+    state = parsed;
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_storageKey, jsonEncode(state));
+  }
+
+  List<bool> _ensureLength(List<bool>? source, int totalSteps) {
+    final base = List<bool>.from(source ?? const <bool>[]);
+    if (base.length < totalSteps) {
+      base.addAll(List<bool>.filled(totalSteps - base.length, false));
+    }
+    if (base.length > totalSteps) {
+      return base.take(totalSteps).toList();
+    }
+    return base;
+  }
+
+  Future<void> toggleStep(String planId, int totalSteps, int index) async {
+    final checks = _ensureLength(state[planId], totalSteps);
+    if (index < 0 || index >= checks.length) {
+      return;
+    }
+    checks[index] = !checks[index];
+    state = {...state, planId: checks};
+    await _save();
+  }
+
+  Future<void> resetPlan(String planId, int totalSteps) async {
+    state = {...state, planId: List<bool>.filled(totalSteps, false)};
+    await _save();
+  }
+}
+
+final actionPlanProgressProvider =
+    StateNotifierProvider<ActionPlanProgressNotifier, Map<String, List<bool>>>((
+      ref,
+    ) {
+      return ActionPlanProgressNotifier();
+    });
 
 final quizQuestionsProvider = Provider.family<List<QuizQuestion>, ShellType?>((
   ref,

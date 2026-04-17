@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../providers/app_providers.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final safeMode = ref.watch(safeCommandModeProvider);
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('Paramètres')),
@@ -52,6 +55,18 @@ class SettingsScreen extends StatelessWidget {
             subtitle: 'Notes globales, snippets, export/import JSON',
             icon: Icons.note_alt_outlined,
             onTap: () => context.go('/notes'),
+          ),
+          Card(
+            child: SwitchListTile(
+              value: safeMode,
+              onChanged: (v) =>
+                  ref.read(safeCommandModeProvider.notifier).setEnabled(v),
+              title: const Text('Mode commande sûre'),
+              subtitle: const Text(
+                'Affiche une checklist de sécurité sur les commandes sensibles.',
+              ),
+              secondary: const Icon(Icons.security_outlined),
+            ),
           ),
         ],
       ),

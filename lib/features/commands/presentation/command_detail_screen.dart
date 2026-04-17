@@ -27,6 +27,8 @@ class CommandDetailScreen extends ConsumerWidget {
 
     final progress = ref.watch(userProgressProvider);
     final notes = ref.watch(commandNotesProvider);
+    final safeModeEnabled = ref.watch(safeCommandModeProvider);
+    final favoriteCollections = ref.watch(favoriteCollectionsProvider);
     final isFavorite = progress.favoriteCommandIds.contains(command.id);
     final currentNote = notes[command.id] ?? '';
     final shellTotal = ref
@@ -82,6 +84,16 @@ class CommandDetailScreen extends ConsumerWidget {
             title: 'Équivalent',
             content: command.equivalentCommandName,
           ),
+          _FavoriteCollectionsCard(
+            commandId: command.id,
+            collections: favoriteCollections,
+          ),
+          if (safeModeEnabled &&
+              _isSensitiveCommand(command.name, command.syntax))
+            _SafeCommandChecklistCard(
+              commandName: command.name,
+              syntax: command.syntax,
+            ),
           _CommandNoteCard(
             commandId: command.id,
             initialValue: currentNote,
@@ -97,6 +109,196 @@ class CommandDetailScreen extends ConsumerWidget {
           ),
           _ListInfoCard(title: 'Conseils', values: command.tips),
         ],
+      ),
+    );
+  }
+}
+
+bool _isSensitiveCommand(String name, String syntax) {
+  final normalized = '$name $syntax'.toLowerCase();
+  const riskPatterns = [
+    'rm',
+    'remove-item',
+    'chmod',
+    'chown',
+    'kill',
+    'stop-process',
+    'systemctl',
+    'service ',
+    'zypper remove',
+    'apt remove',
+    'dnf remove',
+    'pacman -r',
+  ];
+  return riskPatterns.any(normalized.contains);
+}
+
+class _SafeCommandChecklistCard extends StatefulWidget {
+  const _SafeCommandChecklistCard({
+    required this.commandName,
+    required this.syntax,
+  });
+
+  final String commandName;
+  final String syntax;
+
+  @override
+  State<_SafeCommandChecklistCard> createState() =>
+      _SafeCommandChecklistCardState();
+}
+
+class _SafeCommandChecklistCardState extends State<_SafeCommandChecklistCard> {
+  bool _checkPath = false;
+  bool _checkTarget = false;
+  bool _checkRollback = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final completed = [
+      _checkPath,
+      _checkTarget,
+      _checkRollback,
+    ].where((v) => v).length;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Mode commande sûre',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Commande sensible détectée: ${widget.commandName}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _checkPath,
+              title: const Text(
+                'J’ai vérifié le contexte (chemin/service ciblé).',
+              ),
+              onChanged: (v) => setState(() => _checkPath = v ?? false),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _checkTarget,
+              title: const Text(
+                'J’ai confirmé la cible exacte de la commande.',
+              ),
+              onChanged: (v) => setState(() => _checkTarget = v ?? false),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _checkRollback,
+              title: const Text('J’ai un plan de rollback ou une sauvegarde.'),
+              onChanged: (v) => setState(() => _checkRollback = v ?? false),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Checklist: $completed/3',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FavoriteCollectionsCard extends ConsumerWidget {
+  const _FavoriteCollectionsCard({
+    required this.commandId,
+    required this.collections,
+  });
+
+  final String commandId;
+  final Map<String, List<String>> collections;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entries = collections.entries.toList()
+      ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Favoris contextuels',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Nouvelle collection',
+                  onPressed: () async {
+                    final c = TextEditingController();
+                    final add = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Nouvelle collection'),
+                        content: TextField(
+                          controller: c,
+                          decoration: const InputDecoration(
+                            hintText: 'Ex: Debug réseau',
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Annuler'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Ajouter'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (add == true) {
+                      await ref
+                          .read(favoriteCollectionsProvider.notifier)
+                          .addCollection(c.text);
+                    }
+                    c.dispose();
+                  },
+                  icon: const Icon(Icons.add_circle_outline),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (entries.isEmpty)
+              Text(
+                'Aucune collection pour le moment.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              )
+            else
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: entries.map((entry) {
+                  final selected = entry.value.contains(commandId);
+                  return FilterChip(
+                    label: Text(entry.key),
+                    selected: selected,
+                    onSelected: (_) {
+                      ref
+                          .read(favoriteCollectionsProvider.notifier)
+                          .toggleCommand(entry.key, commandId);
+                    },
+                  );
+                }).toList(),
+              ),
+          ],
+        ),
       ),
     );
   }

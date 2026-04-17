@@ -18,10 +18,24 @@ class FavoritesScreen extends ConsumerStatefulWidget {
 
 class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   ShellType? _shellType;
+  String? _selectedCollection;
 
   @override
   Widget build(BuildContext context) {
-    final favorites = ref.watch(favoriteCommandsProvider).where((cmd) {
+    final collections = ref.watch(favoriteCollectionsProvider);
+    final favoriteIds = ref
+        .watch(userProgressProvider)
+        .favoriteCommandIds
+        .toSet();
+
+    final collectionIds = _selectedCollection == null
+        ? favoriteIds
+        : Set<String>.from(
+            collections[_selectedCollection] ?? const <String>[],
+          ).intersection(favoriteIds);
+
+    final favorites = ref.watch(allCommandsProvider).where((cmd) {
+      if (!collectionIds.contains(cmd.id)) return false;
       if (_shellType == null) return true;
       return cmd.shellType == _shellType;
     }).toList();
@@ -33,22 +47,55 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: DropdownButton<ShellType?>(
-              isExpanded: true,
-              value: _shellType,
-              hint: const Text('Filtrer par shell'),
-              items: const [
-                DropdownMenuItem<ShellType?>(value: null, child: Text('Tous')),
-                DropdownMenuItem<ShellType?>(
-                  value: ShellType.bash,
-                  child: Text('Bash'),
+            child: Column(
+              children: [
+                DropdownButton<ShellType?>(
+                  isExpanded: true,
+                  value: _shellType,
+                  hint: const Text('Filtrer par shell'),
+                  items: const [
+                    DropdownMenuItem<ShellType?>(
+                      value: null,
+                      child: Text('Tous'),
+                    ),
+                    DropdownMenuItem<ShellType?>(
+                      value: ShellType.bash,
+                      child: Text('Bash'),
+                    ),
+                    DropdownMenuItem<ShellType?>(
+                      value: ShellType.powershell,
+                      child: Text('PowerShell'),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => _shellType = value),
                 ),
-                DropdownMenuItem<ShellType?>(
-                  value: ShellType.powershell,
-                  child: Text('PowerShell'),
+                const SizedBox(height: AppSpacing.sm),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Tous les favoris'),
+                        selected: _selectedCollection == null,
+                        onSelected: (_) =>
+                            setState(() => _selectedCollection = null),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      ...collections.keys.map(
+                        (name) => Padding(
+                          padding: const EdgeInsets.only(right: AppSpacing.sm),
+                          child: ChoiceChip(
+                            label: Text(name),
+                            selected: _selectedCollection == name,
+                            onSelected: (_) =>
+                                setState(() => _selectedCollection = name),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
-              onChanged: (value) => setState(() => _shellType = value),
             ),
           ),
           Expanded(

@@ -643,6 +643,108 @@ final commandNotesProvider =
       return CommandNotesNotifier();
     });
 
+class SafeCommandModeNotifier extends StateNotifier<bool> {
+  SafeCommandModeNotifier() : super(true) {
+    _load();
+  }
+
+  static const _storageKey = 'safe_command_mode_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_storageKey) ?? true;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_storageKey, enabled);
+  }
+}
+
+final safeCommandModeProvider =
+    StateNotifierProvider<SafeCommandModeNotifier, bool>((ref) {
+      return SafeCommandModeNotifier();
+    });
+
+const _defaultFavoriteCollections = <String>[
+  'Urgence prod',
+  'Routine dev',
+  'Maintenance Linux',
+];
+
+class FavoriteCollectionsNotifier
+    extends StateNotifier<Map<String, List<String>>> {
+  FavoriteCollectionsNotifier() : super(const {}) {
+    _load();
+  }
+
+  static const _storageKey = 'favorite_collections_v1';
+
+  Map<String, List<String>> _ensureDefaults(Map<String, List<String>> source) {
+    final next = <String, List<String>>{};
+    for (final name in _defaultFavoriteCollections) {
+      next[name] = List<String>.from(source[name] ?? const <String>[]);
+    }
+    source.forEach((key, value) {
+      if (!next.containsKey(key)) {
+        next[key] = List<String>.from(value);
+      }
+    });
+    return next;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_storageKey);
+    if (raw == null || raw.isEmpty) {
+      state = _ensureDefaults(const {});
+      return;
+    }
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final mapped = <String, List<String>>{};
+    decoded.forEach((key, value) {
+      mapped[key] = List<String>.from(value as List? ?? const []);
+    });
+    state = _ensureDefaults(mapped);
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_storageKey, jsonEncode(state));
+  }
+
+  Future<void> addCollection(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || state.containsKey(trimmed)) {
+      return;
+    }
+    state = {...state, trimmed: const <String>[]};
+    await _save();
+  }
+
+  Future<void> toggleCommand(String collectionName, String commandId) async {
+    final next = {...state};
+    final list = List<String>.from(next[collectionName] ?? const <String>[]);
+    if (list.contains(commandId)) {
+      list.remove(commandId);
+    } else {
+      list.add(commandId);
+    }
+    next[collectionName] = list;
+    state = next;
+    await _save();
+  }
+}
+
+final favoriteCollectionsProvider =
+    StateNotifierProvider<
+      FavoriteCollectionsNotifier,
+      Map<String, List<String>>
+    >((ref) {
+      return FavoriteCollectionsNotifier();
+    });
+
 class CompletedPathsNotifier extends StateNotifier<Set<String>> {
   CompletedPathsNotifier() : super(<String>{}) {
     _load();

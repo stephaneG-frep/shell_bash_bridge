@@ -37,12 +37,12 @@ class CommandListItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 ShellChip(shellType: command.shellType),
-                const SizedBox(width: 8),
                 DifficultyBadge(level: command.difficulty),
-                const SizedBox(width: 8),
                 RiskBadge(risk: risk),
               ],
             ),

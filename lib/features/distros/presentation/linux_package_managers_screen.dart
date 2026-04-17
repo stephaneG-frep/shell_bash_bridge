@@ -77,7 +77,7 @@ class _LinuxPackageManagersScreenState
             ),
             child: AppSearchBar(
               hintText: _mode == _LinuxCommandsMode.packages
-                  ? 'Ex: install, pacman -Syu, zypper refresh...'
+                  ? 'Ex: install, pacman -Syu, zypper refresh, brew install...'
                   : 'Ex: systemctl status, journalctl -u nginx...',
               onChanged: (value) => setState(() => _query = value),
             ),
@@ -87,7 +87,8 @@ class _LinuxPackageManagersScreenState
                 ? const EmptyStateView(
                     icon: Icons.search_off,
                     title: 'Aucun résultat',
-                    message: 'Essaie avec apt, pacman, dnf, zypper, install...',
+                    message:
+                        'Essaie avec apt, pacman, dnf, yum, zypper, apk, brew, flatpak, snap...',
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(AppSpacing.lg),

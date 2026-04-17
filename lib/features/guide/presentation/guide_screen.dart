@@ -62,17 +62,32 @@ class GuideScreen extends StatelessWidget {
           _GuideSection(
             title: '10. Linux par distribution',
             content:
-                'La page distro couvre apt/pacman/dnf/zypper et aussi Services & Logs (systemctl/service/journalctl) avec copier-coller 1 tap.',
+                'La page distro couvre apt/pacman/dnf/yum/zypper/apk/brew/flatpak/snap et aussi Services & Logs (systemctl/service/journalctl) avec copier-coller 1 tap.',
           ),
           _GuideSection(
             title: '11. Révision intelligente',
             content:
-                'Lance Révision 10 min: 3 commandes + 1 objectif + 5 questions pour consolider rapidement.',
+                'Lance Révision adaptative 10 min: 3 commandes + 1 objectif + 5 questions choisies selon tes erreurs quiz et ton niveau.',
           ),
           _GuideSection(
             title: '12. Recherche unifiée',
             content:
                 'La recherche globale explore commandes, centre de réponses, objectifs métier, paquets/services Linux et snippets personnels.',
+          ),
+          _GuideSection(
+            title: '13. Commandes DevOps',
+            content:
+                'Tu as maintenant des fiches Git, Docker et Kubernetes dans les catégories commandes (Bash et PowerShell).',
+          ),
+          _GuideSection(
+            title: '14. Guidage réponses v2',
+            content:
+                'Le Centre de réponses affiche un niveau de confiance, un niveau de risque, une checklist d action et des alternatives proches.',
+          ),
+          _GuideSection(
+            title: '15. Badges de risque',
+            content:
+                'Dans la liste et le détail commande, un badge indique risque faible/modéré/élevé pour réduire les erreurs.',
           ),
           _GuideSection(
             title: 'Conseil méthode',

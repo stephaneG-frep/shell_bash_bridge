@@ -63,12 +63,12 @@ class CommandDetailScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          Row(
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
             children: [
               ShellChip(shellType: command.shellType),
-              const SizedBox(width: AppSpacing.sm),
               DifficultyBadge(level: command.difficulty),
-              const SizedBox(width: AppSpacing.sm),
               RiskBadge(risk: risk),
             ],
           ),
@@ -403,13 +403,14 @@ class _CommandNoteCardState extends State<_CommandNoteCard> {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Row(
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
               children: [
                 FilledButton.tonal(
                   onPressed: () => widget.onSave(_controller.text),
                   child: const Text('Enregistrer'),
                 ),
-                const SizedBox(width: AppSpacing.sm),
                 TextButton(
                   onPressed: () {
                     _controller.clear();

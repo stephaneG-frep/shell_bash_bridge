@@ -244,7 +244,9 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    Row(
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
                       children: [
                         FilledButton.tonal(
                           onPressed: () {
@@ -254,7 +256,6 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                           },
                           child: const Text('Ouvrir plan'),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
                         FilterChip(
                           label: const Text('Terminé'),
                           selected: _objectiveDone,

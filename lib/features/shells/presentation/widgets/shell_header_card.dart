@@ -28,7 +28,14 @@ class ShellHeaderCard extends StatelessWidget {
               children: [
                 Icon(Icons.code, color: color),
                 const SizedBox(width: AppSpacing.sm),
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),

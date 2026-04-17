@@ -50,7 +50,9 @@ class _LinuxPackageManagersScreenState
               AppSpacing.lg,
               AppSpacing.xs,
             ),
-            child: Row(
+            child: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
               children: [
                 ChoiceChip(
                   label: const Text('Paquets'),
@@ -58,7 +60,6 @@ class _LinuxPackageManagersScreenState
                   onSelected: (_) =>
                       setState(() => _mode = _LinuxCommandsMode.packages),
                 ),
-                const SizedBox(width: AppSpacing.sm),
                 ChoiceChip(
                   label: const Text('Services & Logs'),
                   selected: _mode == _LinuxCommandsMode.services,

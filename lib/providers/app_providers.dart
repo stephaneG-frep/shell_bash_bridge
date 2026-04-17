@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_strings.dart';
 import '../core/utils/enums.dart';
 import '../features/categories/domain/command_category.dart';
+import '../features/answers/data/mock_answers.dart';
+import '../features/answers/domain/answer_entry.dart';
 import '../features/commands/data/commands_repository.dart';
 import '../features/commands/domain/command_item.dart';
 import '../features/compare/data/mock_comparisons.dart';
@@ -34,9 +36,62 @@ final comparisonsProvider = Provider<List<CommandComparison>>((ref) {
   return mockComparisons;
 });
 
-final quizQuestionsProvider = Provider.family<List<QuizQuestion>, ShellType?>((ref, shell) {
+final answersProvider = Provider<List<AnswerEntry>>((ref) {
+  return mockAnswers;
+});
+
+final answerQueryProvider = StateProvider<String>((ref) => '');
+
+final filteredAnswersProvider = Provider<List<AnswerEntry>>((ref) {
+  final query = ref.watch(answerQueryProvider).trim().toLowerCase();
+  final answers = ref.watch(answersProvider);
+  if (query.isEmpty) return answers;
+
+  final tokens = query
+      .split(RegExp(r'\s+'))
+      .where((t) => t.isNotEmpty)
+      .toList();
+  int scoreFor(AnswerEntry entry) {
+    var score = 0;
+    final haystack = [
+      entry.question.toLowerCase(),
+      entry.shortAnswer.toLowerCase(),
+      ...entry.tags.map((e) => e.toLowerCase()),
+      ...entry.steps.map((e) => e.toLowerCase()),
+    ].join(' ');
+
+    for (final token in tokens) {
+      if (haystack.contains(token)) {
+        score += 2;
+      }
+      if (entry.question.toLowerCase().contains(token)) {
+        score += 2;
+      }
+      if (entry.tags.any((tag) => tag.toLowerCase().contains(token))) {
+        score += 3;
+      }
+    }
+    return score;
+  }
+
+  final ranked =
+      answers
+          .map((e) => (entry: e, score: scoreFor(e)))
+          .where((item) => item.score > 0)
+          .toList()
+        ..sort((a, b) => b.score.compareTo(a.score));
+
+  return ranked.map((item) => item.entry).toList();
+});
+
+final quizQuestionsProvider = Provider.family<List<QuizQuestion>, ShellType?>((
+  ref,
+  shell,
+) {
   if (shell == null) return mockQuizQuestions;
-  return mockQuizQuestions.where((q) => q.shellType == null || q.shellType == shell).toList();
+  return mockQuizQuestions
+      .where((q) => q.shellType == null || q.shellType == shell)
+      .toList();
 });
 
 class CommandFilterState {
@@ -95,7 +150,8 @@ class CommandFilterNotifier extends StateNotifier<CommandFilterState> {
     state = state.copyWith(difficulty: value);
   }
 
-  void setOnlyFavorites(bool value) => state = state.copyWith(onlyFavorites: value);
+  void setOnlyFavorites(bool value) =>
+      state = state.copyWith(onlyFavorites: value);
 
   void setShell(ShellType? value) {
     if (value == null) {
@@ -110,9 +166,10 @@ class CommandFilterNotifier extends StateNotifier<CommandFilterState> {
   }
 }
 
-final commandFilterProvider = StateNotifierProvider<CommandFilterNotifier, CommandFilterState>((ref) {
-  return CommandFilterNotifier();
-});
+final commandFilterProvider =
+    StateNotifierProvider<CommandFilterNotifier, CommandFilterState>((ref) {
+      return CommandFilterNotifier();
+    });
 
 class UserProgressNotifier extends StateNotifier<UserProgress> {
   UserProgressNotifier() : super(UserProgress.initial()) {
@@ -145,7 +202,11 @@ class UserProgressNotifier extends StateNotifier<UserProgress> {
     await _save();
   }
 
-  Future<void> markCommandViewed(String commandId, ShellType shellType, int totalInShell) async {
+  Future<void> markCommandViewed(
+    String commandId,
+    ShellType shellType,
+    int totalInShell,
+  ) async {
     final viewed = [...state.viewedCommandIds];
     if (!viewed.contains(commandId)) {
       viewed.add(commandId);
@@ -158,7 +219,9 @@ class UserProgressNotifier extends StateNotifier<UserProgress> {
       viewedCommandIds: viewed,
       bashProgress: totalInShell == 0 && shellType == ShellType.bash
           ? state.bashProgress
-          : (shellType == ShellType.bash ? (viewedBash / totalInShell).clamp(0, 1) : state.bashProgress),
+          : (shellType == ShellType.bash
+                ? (viewedBash / totalInShell).clamp(0, 1)
+                : state.bashProgress),
       powershellProgress: totalInShell == 0 && shellType == ShellType.powershell
           ? state.powershellProgress
           : (shellType == ShellType.powershell
@@ -210,13 +273,17 @@ class UserProgressNotifier extends StateNotifier<UserProgress> {
   }
 }
 
-final userProgressProvider = StateNotifierProvider<UserProgressNotifier, UserProgress>((ref) {
-  return UserProgressNotifier();
-});
+final userProgressProvider =
+    StateNotifierProvider<UserProgressNotifier, UserProgress>((ref) {
+      return UserProgressNotifier();
+    });
 
 final favoriteCommandsProvider = Provider<List<CommandItem>>((ref) {
   final favorites = ref.watch(userProgressProvider).favoriteCommandIds.toSet();
-  return ref.watch(allCommandsProvider).where((cmd) => favorites.contains(cmd.id)).toList();
+  return ref
+      .watch(allCommandsProvider)
+      .where((cmd) => favorites.contains(cmd.id))
+      .toList();
 });
 
 final filteredCommandsProvider = Provider<List<CommandItem>>((ref) {
@@ -225,14 +292,21 @@ final filteredCommandsProvider = Provider<List<CommandItem>>((ref) {
   final favorites = ref.watch(userProgressProvider).favoriteCommandIds.toSet();
 
   return commands.where((cmd) {
-    if (filter.shellType != null && cmd.shellType != filter.shellType) return false;
-    if (filter.categoryId != null && cmd.categoryId != filter.categoryId) return false;
-    if (filter.difficulty != null && cmd.difficulty != filter.difficulty) return false;
+    if (filter.shellType != null && cmd.shellType != filter.shellType) {
+      return false;
+    }
+    if (filter.categoryId != null && cmd.categoryId != filter.categoryId) {
+      return false;
+    }
+    if (filter.difficulty != null && cmd.difficulty != filter.difficulty) {
+      return false;
+    }
     if (filter.onlyFavorites && !favorites.contains(cmd.id)) return false;
 
     if (filter.query.trim().isNotEmpty) {
       final q = filter.query.trim().toLowerCase();
-      final searchable = '${cmd.name} ${cmd.shortDescription} ${cmd.syntax}'.toLowerCase();
+      final searchable = '${cmd.name} ${cmd.shortDescription} ${cmd.syntax}'
+          .toLowerCase();
       return searchable.contains(q);
     }
 
@@ -301,10 +375,16 @@ class QuizSessionNotifier extends StateNotifier<QuizSession> {
   }
 
   void submitAnswer() {
-    if (state.selectedIndex == null || state.submitted || state.isCompleted) return;
-    final isCorrect = state.selectedIndex == state.currentQuestion.correctAnswerIndex;
+    if (state.selectedIndex == null || state.submitted || state.isCompleted) {
+      return;
+    }
+    final isCorrect =
+        state.selectedIndex == state.currentQuestion.correctAnswerIndex;
 
-    state = state.copyWith(submitted: true, score: state.score + (isCorrect ? 1 : 0));
+    state = state.copyWith(
+      submitted: true,
+      score: state.score + (isCorrect ? 1 : 0),
+    );
   }
 
   void nextQuestion() {
@@ -312,7 +392,11 @@ class QuizSessionNotifier extends StateNotifier<QuizSession> {
 
     final nextIndex = state.currentIndex + 1;
     if (nextIndex >= state.questions.length) {
-      state = state.copyWith(currentIndex: nextIndex, clearSelected: true, submitted: false);
+      state = state.copyWith(
+        currentIndex: nextIndex,
+        clearSelected: true,
+        submitted: false,
+      );
       return;
     }
 
@@ -329,7 +413,10 @@ class QuizSessionNotifier extends StateNotifier<QuizSession> {
 }
 
 final quizSessionProvider =
-    StateNotifierProvider.family<QuizSessionNotifier, QuizSession, ShellType?>((ref, shell) {
+    StateNotifierProvider.family<QuizSessionNotifier, QuizSession, ShellType?>((
+      ref,
+      shell,
+    ) {
       final questions = ref.watch(quizQuestionsProvider(shell));
       return QuizSessionNotifier(questions);
     });

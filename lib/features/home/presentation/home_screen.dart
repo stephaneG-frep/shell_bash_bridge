@@ -28,6 +28,10 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('Shell-Bash-Bridge'),
         actions: [
           IconButton(
+            onPressed: () => context.push('/answers'),
+            icon: const Icon(Icons.help_center_outlined),
+          ),
+          IconButton(
             onPressed: () => context.push('/settings'),
             icon: const Icon(Icons.settings_outlined),
           ),
@@ -37,7 +41,10 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            Text('Commencer ici', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Commencer ici',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Apprends Bash et PowerShell étape par étape, puis compare les commandes.',
@@ -51,6 +58,13 @@ class HomeScreen extends ConsumerWidget {
               },
             ),
             const SizedBox(height: AppSpacing.lg),
+            HomeHeroCard(
+              title: 'Trouver ma réponse',
+              subtitle: 'Question libre, réponse guidée et commandes liées.',
+              icon: Icons.psychology_alt_outlined,
+              color: AppColors.secondaryAccent,
+              onTap: () => context.push('/answers'),
+            ),
             HomeHeroCard(
               title: 'Apprendre Bash',
               subtitle: 'Navigation, fichiers, système, scripts.',
@@ -97,7 +111,9 @@ class HomeScreen extends ConsumerWidget {
                 isFavorite: progress.favoriteCommandIds.contains(item.id),
                 onTap: () => context.push('/command/${item.id}'),
                 onFavoriteTap: () {
-                  ref.read(userProgressProvider.notifier).toggleFavorite(item.id);
+                  ref
+                      .read(userProgressProvider.notifier)
+                      .toggleFavorite(item.id);
                 },
               ),
             ),
@@ -111,7 +127,9 @@ class HomeScreen extends ConsumerWidget {
                   isFavorite: true,
                   onTap: () => context.push('/command/${item.id}'),
                   onFavoriteTap: () {
-                    ref.read(userProgressProvider.notifier).toggleFavorite(item.id);
+                    ref
+                        .read(userProgressProvider.notifier)
+                        .toggleFavorite(item.id);
                   },
                 ),
               ),
@@ -127,7 +145,8 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             FilledButton.tonalIcon(
-              onPressed: () => context.push('/quiz?shell=${ShellType.bash.name}'),
+              onPressed: () =>
+                  context.push('/quiz?shell=${ShellType.bash.name}'),
               icon: const Icon(Icons.quiz_outlined),
               label: const Text('Quiz Bash rapide'),
             ),

@@ -5,11 +5,7 @@ import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_text_styles.dart';
 
 class TerminalCodeBlock extends StatelessWidget {
-  const TerminalCodeBlock({
-    super.key,
-    required this.code,
-    this.accent,
-  });
+  const TerminalCodeBlock({super.key, required this.code, this.accent});
 
   final String code;
   final Color? accent;
@@ -22,12 +18,19 @@ class TerminalCodeBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: AppSpacing.cardRadius,
-        border: Border.all(color: (accent ?? AppColors.secondaryAccent).withValues(alpha: 0.35)),
+        border: Border.all(
+          color: (accent ?? AppColors.secondaryAccent).withValues(alpha: 0.35),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('\$ ', style: AppTextStyles.mono.copyWith(color: accent ?? AppColors.secondaryAccent)),
+          Text(
+            '\$ ',
+            style: AppTextStyles.mono.copyWith(
+              color: accent ?? AppColors.secondaryAccent,
+            ),
+          ),
           Expanded(child: Text(code, style: AppTextStyles.mono)),
         ],
       ),

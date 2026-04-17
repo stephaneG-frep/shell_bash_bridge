@@ -28,7 +28,11 @@ class CommandListItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text(command.shortDescription, maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(
+              command.shortDescription,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: 8),
             Row(
               children: [

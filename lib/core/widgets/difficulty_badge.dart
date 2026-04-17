@@ -29,7 +29,11 @@ class DifficultyBadge extends StatelessWidget {
       ),
       child: Text(
         level.label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }

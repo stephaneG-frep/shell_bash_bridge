@@ -18,13 +18,25 @@ class ComparisonCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item.actionTitle, style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              item.actionTitle,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: AppSpacing.md),
-            TerminalCodeBlock(code: item.bashCommand, accent: AppColors.bashAccent),
+            TerminalCodeBlock(
+              code: item.bashCommand,
+              accent: AppColors.bashAccent,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            TerminalCodeBlock(code: item.powershellCommand, accent: AppColors.powershellAccent),
+            TerminalCodeBlock(
+              code: item.powershellCommand,
+              accent: AppColors.powershellAccent,
+            ),
             const SizedBox(height: AppSpacing.md),
-            Text(item.explanation, style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              item.explanation,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ],
         ),
       ),

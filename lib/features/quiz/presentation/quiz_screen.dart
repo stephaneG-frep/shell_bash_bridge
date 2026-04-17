@@ -25,21 +25,23 @@ class QuizScreen extends ConsumerWidget {
 
     if (state.isCompleted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(userProgressProvider.notifier).recordQuizResult(
+        ref
+            .read(userProgressProvider.notifier)
+            .recordQuizResult(
               shellType: shellType,
               correct: state.score,
               total: state.questions.length,
             );
-        context.go('/quiz-result?score=${state.score}&total=${state.questions.length}');
+        context.go(
+          '/quiz-result?score=${state.score}&total=${state.questions.length}',
+        );
       });
     }
 
     final question = state.currentQuestion;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Quiz ${shellType?.label ?? 'Global'}'),
-      ),
+      appBar: AppBar(title: Text('Quiz ${shellType?.label ?? 'Global'}')),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -50,7 +52,10 @@ class QuizScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text(question.question, style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              question.question,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: AppSpacing.lg),
             Expanded(
               child: ListView.builder(
@@ -69,14 +74,19 @@ class QuizScreen extends ConsumerWidget {
             if (state.submitted)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: Text(question.explanation, style: Theme.of(context).textTheme.bodyMedium),
+                child: Text(
+                  question.explanation,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: state.submitted
                     ? notifier.nextQuestion
-                    : (state.selectedIndex == null ? null : notifier.submitAnswer),
+                    : (state.selectedIndex == null
+                          ? null
+                          : notifier.submitAnswer),
                 child: Text(state.submitted ? 'Question suivante' : 'Valider'),
               ),
             ),

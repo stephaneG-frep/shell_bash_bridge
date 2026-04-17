@@ -36,7 +36,10 @@ class ShellHeaderCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             LinearProgressIndicator(value: progress, color: color),
             const SizedBox(height: AppSpacing.xs),
-            Text('${(progress * 100).toInt()}% de progression', style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              '${(progress * 100).toInt()}% de progression',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ],
         ),
       ),

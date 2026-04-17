@@ -37,11 +37,21 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.terminal_rounded, size: 72, color: AppColors.secondaryAccent),
+              const Icon(
+                Icons.terminal_rounded,
+                size: 72,
+                color: AppColors.secondaryAccent,
+              ),
               const SizedBox(height: 16),
-              Text(AppStrings.appName, style: Theme.of(context).textTheme.displaySmall),
+              Text(
+                AppStrings.appName,
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
               const SizedBox(height: 8),
-              Text(AppStrings.appSubtitle, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                AppStrings.appSubtitle,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ],
           ),
         ),

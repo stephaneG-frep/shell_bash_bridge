@@ -37,7 +37,10 @@ class CategoryGrid extends StatelessWidget {
                 children: [
                   Icon(category.icon),
                   const Spacer(),
-                  Text(category.title, style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    category.title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   Text(
                     category.description,
                     maxLines: 2,

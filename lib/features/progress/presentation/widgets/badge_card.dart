@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_spacing.dart';
 
 class BadgeCard extends StatelessWidget {
-  const BadgeCard({
-    super.key,
-    required this.title,
-  });
+  const BadgeCard({super.key, required this.title});
 
   final String title;
 

@@ -19,8 +19,12 @@ class QuizOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color? color;
-    if (showState && correct) color = Colors.green.withValues(alpha: 0.2);
-    if (showState && selected && !correct) color = Colors.red.withValues(alpha: 0.2);
+    if (showState && correct) {
+      color = Colors.green.withValues(alpha: 0.2);
+    }
+    if (showState && selected && !correct) {
+      color = Colors.red.withValues(alpha: 0.2);
+    }
 
     return Card(
       color: color,

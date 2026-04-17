@@ -18,20 +18,22 @@ class CommandDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final command = ref.watch(commandByIdProvider(commandId));
     if (command == null) {
-      return const Scaffold(
-        body: Center(child: Text('Commande introuvable.')),
-      );
+      return const Scaffold(body: Center(child: Text('Commande introuvable.')));
     }
 
     final progress = ref.watch(userProgressProvider);
+    final notes = ref.watch(commandNotesProvider);
     final isFavorite = progress.favoriteCommandIds.contains(command.id);
+    final currentNote = notes[command.id] ?? '';
     final shellTotal = ref
         .watch(allCommandsProvider)
         .where((c) => c.shellType == command.shellType)
         .length;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(userProgressProvider.notifier).markCommandViewed(command.id, command.shellType, shellTotal);
+      ref
+          .read(userProgressProvider.notifier)
+          .markCommandViewed(command.id, command.shellType, shellTotal);
     });
 
     return Scaffold(
@@ -40,7 +42,9 @@ class CommandDetailScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () {
-              ref.read(userProgressProvider.notifier).toggleFavorite(command.id);
+              ref
+                  .read(userProgressProvider.notifier)
+                  .toggleFavorite(command.id);
             },
             icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
           ),
@@ -59,15 +63,115 @@ class CommandDetailScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           TerminalCodeBlock(
             code: command.syntax,
-            accent: command.shellType.name == 'bash' ? AppColors.bashAccent : AppColors.powershellAccent,
+            accent: command.shellType.name == 'bash'
+                ? AppColors.bashAccent
+                : AppColors.powershellAccent,
           ),
           const SizedBox(height: AppSpacing.md),
-          CommandInfoCard(title: 'Description', content: command.fullDescription),
+          CommandInfoCard(
+            title: 'Description',
+            content: command.fullDescription,
+          ),
           CommandInfoCard(title: 'Exemple pratique', content: command.example),
-          CommandInfoCard(title: 'Équivalent', content: command.equivalentCommandName),
-          _ListInfoCard(title: 'Erreurs fréquentes', values: command.commonMistakes),
+          CommandInfoCard(
+            title: 'Équivalent',
+            content: command.equivalentCommandName,
+          ),
+          _CommandNoteCard(
+            commandId: command.id,
+            initialValue: currentNote,
+            onSave: (value) {
+              ref
+                  .read(commandNotesProvider.notifier)
+                  .saveNote(command.id, value);
+            },
+          ),
+          _ListInfoCard(
+            title: 'Erreurs fréquentes',
+            values: command.commonMistakes,
+          ),
           _ListInfoCard(title: 'Conseils', values: command.tips),
         ],
+      ),
+    );
+  }
+}
+
+class _CommandNoteCard extends StatefulWidget {
+  const _CommandNoteCard({
+    required this.commandId,
+    required this.initialValue,
+    required this.onSave,
+  });
+
+  final String commandId;
+  final String initialValue;
+  final ValueChanged<String> onSave;
+
+  @override
+  State<_CommandNoteCard> createState() => _CommandNoteCardState();
+}
+
+class _CommandNoteCardState extends State<_CommandNoteCard> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void didUpdateWidget(covariant _CommandNoteCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.commandId != widget.commandId) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Mes notes', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: _controller,
+              minLines: 3,
+              maxLines: 6,
+              decoration: const InputDecoration(
+                hintText: 'Ajoute ta note perso, exemple, piège à éviter...',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                FilledButton.tonal(
+                  onPressed: () => widget.onSave(_controller.text),
+                  child: const Text('Enregistrer'),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                TextButton(
+                  onPressed: () {
+                    _controller.clear();
+                    widget.onSave('');
+                  },
+                  child: const Text('Effacer'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -89,10 +193,15 @@ class _ListInfoCard extends StatelessWidget {
           children: [
             Text(title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
-            ...values.map((value) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                  child: Text('• $value', style: Theme.of(context).textTheme.bodyMedium),
-                )),
+            ...values.map(
+              (value) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: Text(
+                  '• $value',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ),
           ],
         ),
       ),

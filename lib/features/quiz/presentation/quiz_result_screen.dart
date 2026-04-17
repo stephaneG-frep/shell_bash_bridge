@@ -4,11 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_spacing.dart';
 
 class QuizResultScreen extends StatelessWidget {
-  const QuizResultScreen({
-    super.key,
-    required this.score,
-    required this.total,
-  });
+  const QuizResultScreen({super.key, required this.score, required this.total});
 
   final int score;
   final int total;
@@ -25,11 +21,16 @@ class QuizResultScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              ratio >= 0.7 ? Icons.emoji_events_outlined : Icons.school_outlined,
+              ratio >= 0.7
+                  ? Icons.emoji_events_outlined
+                  : Icons.school_outlined,
               size: 72,
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('$score / $total', style: Theme.of(context).textTheme.displaySmall),
+            Text(
+              '$score / $total',
+              style: Theme.of(context).textTheme.displaySmall,
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               ratio >= 0.7

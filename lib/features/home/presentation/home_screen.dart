@@ -22,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
     final progress = ref.watch(userProgressProvider);
     final favorites = ref.watch(favoriteCommandsProvider).take(3).toList();
     final tip = ref.watch(tipOfDayProvider);
+    final completedPaths = ref.watch(completedPathIdsProvider).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -85,6 +86,14 @@ class HomeScreen extends ConsumerWidget {
               icon: Icons.compare_arrows,
               color: AppColors.secondaryAccent,
               onTap: () => context.go('/compare'),
+            ),
+            HomeHeroCard(
+              title: 'Parcours guidés',
+              subtitle:
+                  '$completedPaths objectif(s) terminé(s). Continue ta progression.',
+              icon: Icons.route_outlined,
+              color: AppColors.powershellAccent,
+              onTap: () => context.push('/paths'),
             ),
             const SizedBox(height: AppSpacing.xl),
             SectionHeader(

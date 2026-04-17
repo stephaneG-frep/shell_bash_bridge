@@ -7,6 +7,7 @@ import '../features/answers/presentation/answers_screen.dart';
 import '../features/compare/presentation/compare_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/paths/presentation/learning_paths_screen.dart';
 import '../features/progress/presentation/progress_screen.dart';
 import '../features/quiz/presentation/quiz_result_screen.dart';
 import '../features/quiz/presentation/quiz_screen.dart';
@@ -66,6 +67,10 @@ final appRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      path: '/paths',
+      builder: (context, state) => const LearningPathsScreen(),
     ),
     GoRoute(
       path: '/answers',

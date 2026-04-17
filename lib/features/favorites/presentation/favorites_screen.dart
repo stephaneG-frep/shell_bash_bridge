@@ -37,8 +37,14 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
               hint: const Text('Filtrer par shell'),
               items: const [
                 DropdownMenuItem<ShellType?>(value: null, child: Text('Tous')),
-                DropdownMenuItem<ShellType?>(value: ShellType.bash, child: Text('Bash')),
-                DropdownMenuItem<ShellType?>(value: ShellType.powershell, child: Text('PowerShell')),
+                DropdownMenuItem<ShellType?>(
+                  value: ShellType.bash,
+                  child: Text('Bash'),
+                ),
+                DropdownMenuItem<ShellType?>(
+                  value: ShellType.powershell,
+                  child: Text('PowerShell'),
+                ),
               ],
               onChanged: (value) => setState(() => _shellType = value),
             ),
@@ -48,7 +54,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 ? const EmptyStateView(
                     icon: Icons.favorite_border,
                     title: 'Aucun favori',
-                    message: 'Ajoute des commandes en favori pour les retrouver vite.',
+                    message:
+                        'Ajoute des commandes en favori pour les retrouver vite.',
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(AppSpacing.lg),
@@ -60,7 +67,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                         isFavorite: true,
                         onTap: () => context.push('/command/${item.id}'),
                         onFavoriteTap: () {
-                          ref.read(userProgressProvider.notifier).toggleFavorite(item.id);
+                          ref
+                              .read(userProgressProvider.notifier)
+                              .toggleFavorite(item.id);
                         },
                       );
                     },

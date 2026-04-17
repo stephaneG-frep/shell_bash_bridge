@@ -33,18 +33,53 @@ class _CommandsScreenState extends ConsumerState<CommandsScreen> {
     final progress = ref.watch(userProgressProvider);
     final filter = ref.watch(commandFilterProvider);
     final categories = ref.watch(categoriesProvider);
+    final history = ref.watch(searchHistoryProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Commandes')),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
             child: AppSearchBar(
               hintText: 'Nom, syntaxe, description...',
-              onChanged: (value) => ref.read(commandFilterProvider.notifier).setQuery(value),
+              onChanged: (value) =>
+                  ref.read(commandFilterProvider.notifier).setQuery(value),
+              onSubmitted: (value) {
+                ref.read(searchHistoryProvider.notifier).add(value);
+              },
             ),
           ),
+          if (history.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: history
+                      .map(
+                        (h) => Padding(
+                          padding: const EdgeInsets.only(right: AppSpacing.sm),
+                          child: ActionChip(
+                            label: Text(h),
+                            onPressed: () {
+                              ref
+                                  .read(commandFilterProvider.notifier)
+                                  .setQuery(h);
+                            },
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+          if (history.isNotEmpty) const SizedBox(height: AppSpacing.sm),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -53,7 +88,9 @@ class _CommandsScreenState extends ConsumerState<CommandsScreen> {
                 FilterChip(
                   label: const Text('Favoris'),
                   selected: filter.onlyFavorites,
-                  onSelected: (value) => ref.read(commandFilterProvider.notifier).setOnlyFavorites(value),
+                  onSelected: (value) => ref
+                      .read(commandFilterProvider.notifier)
+                      .setOnlyFavorites(value),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 ...DifficultyLevel.values.map(
@@ -63,7 +100,9 @@ class _CommandsScreenState extends ConsumerState<CommandsScreen> {
                       label: Text(level.label),
                       selected: filter.difficulty == level,
                       onSelected: (value) {
-                        ref.read(commandFilterProvider.notifier).setDifficulty(value ? level : null);
+                        ref
+                            .read(commandFilterProvider.notifier)
+                            .setDifficulty(value ? level : null);
                       },
                     ),
                   ),
@@ -72,9 +111,15 @@ class _CommandsScreenState extends ConsumerState<CommandsScreen> {
                   value: filter.categoryId,
                   hint: const Text('Catégorie'),
                   items: [
-                    const DropdownMenuItem<String?>(value: null, child: Text('Toutes')),
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('Toutes'),
+                    ),
                     ...categories.map(
-                      (c) => DropdownMenuItem<String?>(value: c.id, child: Text(c.title)),
+                      (c) => DropdownMenuItem<String?>(
+                        value: c.id,
+                        child: Text(c.title),
+                      ),
                     ),
                   ],
                   onChanged: (value) {
@@ -99,10 +144,14 @@ class _CommandsScreenState extends ConsumerState<CommandsScreen> {
                       final command = commands[index];
                       return CommandListItem(
                         command: command,
-                        isFavorite: progress.favoriteCommandIds.contains(command.id),
+                        isFavorite: progress.favoriteCommandIds.contains(
+                          command.id,
+                        ),
                         onTap: () => context.push('/command/${command.id}'),
                         onFavoriteTap: () {
-                          ref.read(userProgressProvider.notifier).toggleFavorite(command.id);
+                          ref
+                              .read(userProgressProvider.notifier)
+                              .toggleFavorite(command.id);
                         },
                       );
                     },

@@ -29,7 +29,10 @@ class ContinueLearningCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               LinearProgressIndicator(value: progress),
               const SizedBox(height: AppSpacing.sm),
-              Text('${(progress * 100).toInt()}% complété', style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                '${(progress * 100).toInt()}% complété',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ],
           ),
         ),

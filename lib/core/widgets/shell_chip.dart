@@ -10,7 +10,9 @@ class ShellChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = shellType == ShellType.bash ? AppColors.bashAccent : AppColors.powershellAccent;
+    final color = shellType == ShellType.bash
+        ? AppColors.bashAccent
+        : AppColors.powershellAccent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -19,7 +21,11 @@ class ShellChip extends StatelessWidget {
       ),
       child: Text(
         shellType.label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }

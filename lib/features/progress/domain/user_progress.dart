@@ -80,7 +80,9 @@ class UserProgress {
 
   factory UserProgress.fromMap(Map<String, dynamic> map) {
     return UserProgress(
-      viewedCommandIds: List<String>.from(map['viewedCommandIds'] as List? ?? []),
+      viewedCommandIds: List<String>.from(
+        map['viewedCommandIds'] as List? ?? [],
+      ),
       favoriteCommandIds: List<String>.from(
         map['favoriteCommandIds'] as List? ?? [],
       ),

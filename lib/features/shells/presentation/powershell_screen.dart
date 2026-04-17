@@ -38,7 +38,9 @@ class PowerShellScreen extends ConsumerWidget {
           CategoryGrid(
             categories: categories,
             onTap: (category) {
-              ref.read(commandFilterProvider.notifier).reset(ShellType.powershell);
+              ref
+                  .read(commandFilterProvider.notifier)
+                  .reset(ShellType.powershell);
               ref.read(commandFilterProvider.notifier).setCategory(category.id);
               context.push('/commands?shell=${ShellType.powershell.name}');
             },
@@ -46,7 +48,9 @@ class PowerShellScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.lg),
           FilledButton.icon(
             onPressed: () {
-              ref.read(commandFilterProvider.notifier).reset(ShellType.powershell);
+              ref
+                  .read(commandFilterProvider.notifier)
+                  .reset(ShellType.powershell);
               context.push('/commands?shell=${ShellType.powershell.name}');
             },
             icon: const Icon(Icons.menu_book_outlined),
@@ -54,7 +58,8 @@ class PowerShellScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           OutlinedButton.icon(
-            onPressed: () => context.push('/quiz?shell=${ShellType.powershell.name}'),
+            onPressed: () =>
+                context.push('/quiz?shell=${ShellType.powershell.name}'),
             icon: const Icon(Icons.quiz_outlined),
             label: const Text('Lancer le quiz PowerShell'),
           ),

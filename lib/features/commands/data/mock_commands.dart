@@ -43,12 +43,15 @@ const mockCommands = <CommandItem>[
     categoryId: 'navigation',
     syntax: 'pwd',
     shortDescription: 'Affiche le dossier courant.',
-    fullDescription: 'Montre le chemin absolu du répertoire dans lequel tu te trouves.',
+    fullDescription:
+        'Montre le chemin absolu du répertoire dans lequel tu te trouves.',
     example: 'pwd',
     difficulty: DifficultyLevel.beginner,
     equivalentCommandName: 'Get-Location',
     commonMistakes: ['Confondre avec `cd` qui change le dossier.'],
-    tips: ['Utilise `pwd` avant une commande risquée pour vérifier le contexte.'],
+    tips: [
+      'Utilise `pwd` avant une commande risquée pour vérifier le contexte.',
+    ],
   ),
   CommandItem(
     id: 'bash_ls',
@@ -57,7 +60,8 @@ const mockCommands = <CommandItem>[
     categoryId: 'navigation',
     syntax: 'ls -la',
     shortDescription: 'Liste les fichiers et dossiers.',
-    fullDescription: 'Affiche le contenu d’un dossier avec options pour les détails et fichiers cachés.',
+    fullDescription:
+        'Affiche le contenu d’un dossier avec options pour les détails et fichiers cachés.',
     example: 'ls -la /var/log',
     difficulty: DifficultyLevel.beginner,
     equivalentCommandName: 'Get-ChildItem',
@@ -85,7 +89,8 @@ const mockCommands = <CommandItem>[
     categoryId: 'files',
     syntax: 'mkdir -p <folder>',
     shortDescription: 'Crée un dossier.',
-    fullDescription: 'Crée un ou plusieurs dossiers avec option pour créer l’arborescence.',
+    fullDescription:
+        'Crée un ou plusieurs dossiers avec option pour créer l’arborescence.',
     example: 'mkdir -p projet/src',
     difficulty: DifficultyLevel.beginner,
     equivalentCommandName: 'New-Item -ItemType Directory',
@@ -99,7 +104,8 @@ const mockCommands = <CommandItem>[
     categoryId: 'files',
     syntax: 'touch <file>',
     shortDescription: 'Crée un fichier vide.',
-    fullDescription: 'Crée un fichier s’il n’existe pas ou met à jour sa date de modification.',
+    fullDescription:
+        'Crée un fichier s’il n’existe pas ou met à jour sa date de modification.',
     example: 'touch notes.txt',
     difficulty: DifficultyLevel.beginner,
     equivalentCommandName: 'New-Item -ItemType File',
@@ -155,7 +161,8 @@ const mockCommands = <CommandItem>[
     categoryId: 'text',
     syntax: 'cat <file>',
     shortDescription: 'Lit un fichier texte.',
-    fullDescription: 'Affiche le contenu d’un ou plusieurs fichiers à la suite.',
+    fullDescription:
+        'Affiche le contenu d’un ou plusieurs fichiers à la suite.',
     example: 'cat README.md',
     difficulty: DifficultyLevel.beginner,
     equivalentCommandName: 'Get-Content',
@@ -239,7 +246,8 @@ const mockCommands = <CommandItem>[
     categoryId: 'text',
     syntax: 'echo "text"',
     shortDescription: 'Affiche ou écrit du texte.',
-    fullDescription: 'Imprime une chaîne en sortie standard ou vers un fichier avec redirection.',
+    fullDescription:
+        'Imprime une chaîne en sortie standard ou vers un fichier avec redirection.',
     example: 'echo "hello" > hello.txt',
     difficulty: DifficultyLevel.beginner,
     equivalentCommandName: 'Write-Output',
@@ -425,7 +433,9 @@ const mockCommands = <CommandItem>[
     example: 'Test-Path .\\config.json',
     difficulty: DifficultyLevel.beginner,
     equivalentCommandName: 'test -e',
-    commonMistakes: ['Utiliser la commande après action risquée au lieu d’avant.'],
+    commonMistakes: [
+      'Utiliser la commande après action risquée au lieu d’avant.',
+    ],
     tips: ['Parfait avant `Remove-Item` ou `Move-Item`.'],
   ),
   CommandItem(

@@ -28,7 +28,8 @@ class BashScreen extends ConsumerWidget {
         children: [
           ShellHeaderCard(
             title: 'Bash Foundations',
-            description: 'Commandes Linux essentielles pour naviguer et manipuler fichiers.',
+            description:
+                'Commandes Linux essentielles pour naviguer et manipuler fichiers.',
             color: AppColors.bashAccent,
             progress: progress.bashProgress,
           ),

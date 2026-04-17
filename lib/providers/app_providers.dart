@@ -12,6 +12,8 @@ import '../features/commands/data/commands_repository.dart';
 import '../features/commands/domain/command_item.dart';
 import '../features/compare/data/mock_comparisons.dart';
 import '../features/compare/domain/command_comparison.dart';
+import '../features/paths/data/mock_learning_paths.dart';
+import '../features/paths/domain/learning_path.dart';
 import '../features/progress/domain/user_progress.dart';
 import '../features/quiz/data/mock_quiz_questions.dart';
 import '../features/quiz/domain/quiz_question.dart';
@@ -327,6 +329,125 @@ final tipOfDayProvider = Provider<String>((ref) {
   final dayIndex = DateTime.now().difference(DateTime(2026, 1, 1)).inDays;
   return tips[dayIndex % tips.length];
 });
+
+final learningPathsProvider = Provider<List<LearningPath>>((ref) {
+  return mockLearningPaths;
+});
+
+class SearchHistoryNotifier extends StateNotifier<List<String>> {
+  SearchHistoryNotifier() : super(const []) {
+    _load();
+  }
+
+  static const _storageKey = 'search_history_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getStringList(_storageKey) ?? const [];
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_storageKey, state);
+  }
+
+  Future<void> add(String query) async {
+    final normalized = query.trim();
+    if (normalized.length < 3) {
+      return;
+    }
+    final next = [
+      normalized,
+      ...state.where((item) => item.toLowerCase() != normalized.toLowerCase()),
+    ].take(10).toList();
+    state = next;
+    await _save();
+  }
+
+  Future<void> clear() async {
+    state = const [];
+    await _save();
+  }
+}
+
+final searchHistoryProvider =
+    StateNotifierProvider<SearchHistoryNotifier, List<String>>((ref) {
+      return SearchHistoryNotifier();
+    });
+
+class CommandNotesNotifier extends StateNotifier<Map<String, String>> {
+  CommandNotesNotifier() : super(const {}) {
+    _load();
+  }
+
+  static const _storageKey = 'command_notes_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_storageKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    final map = jsonDecode(raw) as Map<String, dynamic>;
+    state = map.map((key, value) => MapEntry(key, value.toString()));
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_storageKey, jsonEncode(state));
+  }
+
+  Future<void> saveNote(String commandId, String note) async {
+    final trimmed = note.trim();
+    final next = {...state};
+    if (trimmed.isEmpty) {
+      next.remove(commandId);
+    } else {
+      next[commandId] = trimmed;
+    }
+    state = next;
+    await _save();
+  }
+}
+
+final commandNotesProvider =
+    StateNotifierProvider<CommandNotesNotifier, Map<String, String>>((ref) {
+      return CommandNotesNotifier();
+    });
+
+class CompletedPathsNotifier extends StateNotifier<Set<String>> {
+  CompletedPathsNotifier() : super(<String>{}) {
+    _load();
+  }
+
+  static const _storageKey = 'completed_paths_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = {...(prefs.getStringList(_storageKey) ?? const <String>[])};
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_storageKey, state.toList());
+  }
+
+  Future<void> toggle(String pathId) async {
+    final next = {...state};
+    if (next.contains(pathId)) {
+      next.remove(pathId);
+    } else {
+      next.add(pathId);
+    }
+    state = next;
+    await _save();
+  }
+}
+
+final completedPathIdsProvider =
+    StateNotifierProvider<CompletedPathsNotifier, Set<String>>((ref) {
+      return CompletedPathsNotifier();
+    });
 
 class QuizSession {
   const QuizSession({

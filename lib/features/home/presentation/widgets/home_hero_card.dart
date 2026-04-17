@@ -23,7 +23,8 @@ class HomeHeroCard extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 350),
       tween: Tween(begin: 0.97, end: 1),
-      builder: (context, value, child) => Transform.scale(scale: value, child: child),
+      builder: (context, value, child) =>
+          Transform.scale(scale: value, child: child),
       child: Card(
         child: InkWell(
           borderRadius: AppSpacing.cardRadius,
@@ -45,9 +46,15 @@ class HomeHeroCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       const SizedBox(height: AppSpacing.xs),
-                      Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ),

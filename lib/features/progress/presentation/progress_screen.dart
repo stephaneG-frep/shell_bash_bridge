@@ -58,7 +58,9 @@ class ProgressScreen extends ConsumerWidget {
           const SectionHeader(title: 'Badges'),
           const SizedBox(height: AppSpacing.sm),
           if (progress.earnedBadges.isEmpty)
-            const BadgeCard(title: 'Débutant - commence par consulter 5 commandes')
+            const BadgeCard(
+              title: 'Débutant - commence par consulter 5 commandes',
+            )
           else
             ...progress.earnedBadges.map((b) => BadgeCard(title: b)),
         ],
@@ -84,7 +86,10 @@ class _ProgressBar extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           LinearProgressIndicator(value: value),
           const SizedBox(height: AppSpacing.xs),
-          Text('${(value * 100).toInt()}%', style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            '${(value * 100).toInt()}%',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );

@@ -22,7 +22,9 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
     final comparisons = ref.watch(comparisonsProvider).where((item) {
       if (_query.trim().isEmpty) return true;
       final q = _query.trim().toLowerCase();
-      final data = '${item.actionTitle} ${item.bashCommand} ${item.powershellCommand}'.toLowerCase();
+      final data =
+          '${item.actionTitle} ${item.bashCommand} ${item.powershellCommand}'
+              .toLowerCase();
       return data.contains(q);
     }).toList();
 
@@ -31,7 +33,12 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
             child: AppSearchBar(
               hintText: 'Rechercher une action...',
               onChanged: (value) => setState(() => _query = value),
@@ -47,7 +54,8 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
                 : ListView.builder(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     itemCount: comparisons.length,
-                    itemBuilder: (context, index) => ComparisonCard(item: comparisons[index]),
+                    itemBuilder: (context, index) =>
+                        ComparisonCard(item: comparisons[index]),
                   ),
           ),
         ],

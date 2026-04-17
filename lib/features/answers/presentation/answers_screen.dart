@@ -14,9 +14,20 @@ class AnswersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final query = ref.watch(answerQueryProvider);
     final answers = ref.watch(filteredAnswersProvider);
+    final history = ref.watch(searchHistoryProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Centre de réponses')),
+      appBar: AppBar(
+        title: const Text('Centre de réponses'),
+        actions: [
+          if (history.isNotEmpty)
+            IconButton(
+              onPressed: () => ref.read(searchHistoryProvider.notifier).clear(),
+              icon: const Icon(Icons.history_toggle_off),
+              tooltip: 'Effacer historique',
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -31,8 +42,29 @@ class AnswersScreen extends ConsumerWidget {
                   'Pose une question: supprimer un fichier, rechercher texte...',
               onChanged: (value) =>
                   ref.read(answerQueryProvider.notifier).state = value,
+              onSubmitted: (value) {
+                ref.read(searchHistoryProvider.notifier).add(value);
+              },
             ),
           ),
+          if (history.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: history
+                    .map(
+                      (h) => ActionChip(
+                        label: Text(h),
+                        onPressed: () =>
+                            ref.read(answerQueryProvider.notifier).state = h,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          if (history.isNotEmpty) const SizedBox(height: AppSpacing.sm),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Wrap(
